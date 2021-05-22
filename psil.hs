@@ -25,6 +25,7 @@ data Sexp = Snil                        -- La liste vide
           -- Génère automatiquement un pretty-printer et une fonction de
           -- comparaison structurelle.
           deriving (Show, Eq)
+          -- deriving (Eq)
 
 -- Exemples:
 -- (+ 2 3)  ==  (((() . +) . 2) . 3)
@@ -170,10 +171,10 @@ showSexp' (Scons e1 e2) = showHead (Scons e1 e2) . showString ")"
 -- On peut utiliser notre pretty-printer pour la fonction générique "show"
 -- (utilisée par la boucle interactive de GHCi).  Mais avant de faire cela,
 -- il faut enlever le "deriving Show" dans la déclaration de Sexp.
-{-
-instance Show Sexp where
-    showsPrec p = showSexp'
--}
+
+-- instance Show Sexp where
+--     showsPrec p = showSexp'
+
 
 -- Pour lire et imprimer des Sexp plus facilement dans la boucle interactive
 -- de Hugs/GHCi:
@@ -219,23 +220,28 @@ sexp2list s = loop s []
       loop Snil acc = acc
       loop _ _ = error ("Improper list: " ++ show s)
 
-sexpupdate :: Sexp -> Sexp -> Sexp -> Sexp
-sexpupdate (Scons se1 se2) seend sepattern | se2 == sepattern = Scons se1 seend
-                                           | otherwise = sexpupdate se1 ()
-
 -- Analyse une Sexp et construit une Lexp équivalente.
 s2l :: Sexp -> Lexp
 s2l (Snum n) = Lnum n
 s2l (Ssym s) = Lvar s
-s2l (se@(Scons se1 se2)) = case sexp2list se of
+s2l (se@(Scons se1 se2)) = let selist = sexp2list se in case selist of
     (Ssym "hastype" : e : t : []) -> Lhastype (s2l e) (s2t t)
-    (Ssym "call" : e : e1 : []) -> Lcall (s2l e) (s2l e1)
-    (Ssym "call" : es) -> Lcall (s2l se1) (s2l (last es))
-    (Ssym "fun" : v : e : []) -> Lfun (s2l v) (s2l e)
-    (Ssym "fun" : v : vse) -> Lfun (s2l v) ()
+    (Ssym "call" : es) -> s2l' selist
+        -- [Ssym "call",Ssym "+",Snum 2,Snum 3]
+        -- Lcall (s2l (Scons (Scons (Scons Snil (Ssym "call")) (Ssym "+")) (Snum 2))) (s2l Snum3)
+        -- Lcall (Lcall (Lvar +) (Lnum 2)) (Lnum 3)
+    -- (Ssym "fun" : v : e : []) -> Lfun (s2l v) (s2l e)
+    -- (Ssym "fun" : v : vse) -> Lfun (s2l v) () -- Needs correction
 -- ¡¡ COMPLÉTER !!
     _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 s2l se = error ("Unrecognized Psil expression: " ++ (showSexp se))
+
+s2l' :: [Sexp] -> Lexp
+s2l' selist = case selist of
+              (Ssym "call" : e : e1 : []) -> Lcall (s2l e) (s2l e1)
+              (Ssym "call" : es) -> Lcall (s2l' ([Ssym "call"] ++ init es)) (s2l (last es))
+              _ -> error ("Unrecognized Psil expression")
+              
 
 s2t :: Sexp -> Ltype
 s2t (Ssym "Int") = Lint
