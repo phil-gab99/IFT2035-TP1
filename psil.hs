@@ -224,14 +224,11 @@ sexp2list s = loop s []
 s2l :: Sexp -> Lexp
 s2l (Snum n) = Lnum n
 s2l (Ssym s) = Lvar s
-s2l (se@(Scons se1 se2)) = let selist = sexp2list se in case selist of
+s2l (se@(Scons _ _)) = let selist = sexp2list se in case selist of
     (Ssym "hastype" : e : t : []) -> Lhastype (s2l e) (s2t t)
-    (Ssym "call" : es) -> s2l' selist
-        -- [Ssym "call",Ssym "+",Snum 2,Snum 3]
-        -- Lcall (s2l (Scons (Scons (Scons Snil (Ssym "call")) (Ssym "+")) (Snum 2))) (s2l Snum3)
-        -- Lcall (Lcall (Lvar +) (Lnum 2)) (Lnum 3)
-    -- (Ssym "fun" : v : e : []) -> Lfun (s2l v) (s2l e)
-    -- (Ssym "fun" : v : vse) -> Lfun (s2l v) () -- Needs correction
+    (Ssym "call" : _) -> s2l' selist
+    (Ssym "fun" : _) -> s2l' selist
+    (Ssym "let" : es) -> Llet (s2d (init es)) (s2l (last es))
 -- ¡¡ COMPLÉTER !!
     _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 s2l se = error ("Unrecognized Psil expression: " ++ (showSexp se))
@@ -240,13 +237,23 @@ s2l' :: [Sexp] -> Lexp
 s2l' selist = case selist of
               (Ssym "call" : e : e1 : []) -> Lcall (s2l e) (s2l e1)
               (Ssym "call" : es) -> Lcall (s2l' ([Ssym "call"] ++ init es)) (s2l (last es))
+              (Ssym "fun" : v : e : []) -> let Lvar x = s2l v in Lfun (x) (s2l e)
+              (Ssym "fun" : v : vs) -> let Lvar x = s2l v in Lfun (x) (s2l' ([Ssym"fun"] ++ vs))
               _ -> error ("Unrecognized Psil expression")
-              
 
 s2t :: Sexp -> Ltype
 s2t (Ssym "Int") = Lint
 -- ¡¡ COMPLÉTER !!
 s2t s = error ("Unrecognized Psil type: " ++ (showSexp s))
+
+s2d :: [Sexp] -> [(Var, Lexp)]
+s2d [] = []
+s2d (d : ds) = case sexp2list d of
+               (Ssym x : e : []) -> (x, s2l e) : s2d ds
+               (Ssym x : _ : e : []) -> (x, s2l e) : s2d ds
+               (Ssym x : es) -> (x, s2l' (Ssym "fun" : getArgs (init es) : (last es) : []) : s2d ds)
+
+getArgs :: [Sexp] -> []
 
 ---------------------------------------------------------------------------
 -- Évaluateur                                                            --
