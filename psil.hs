@@ -213,6 +213,7 @@ data Lexp = Lnum Int                    -- Constante entière.
 -- Conversion de Sexp à Lexp                                             --
 ---------------------------------------------------------------------------
 
+-- Convertit une liste Sexp à une liste Haskell avec les éléments d'intérêts
 sexp2list :: Sexp -> [Sexp]
 sexp2list s = loop s []
     where
@@ -220,45 +221,64 @@ sexp2list s = loop s []
       loop Snil acc = acc
       loop _ _ = error ("Improper list: " ++ show s)
 
--- Analyse une Sexp et construit une Lexp équivalente.
+-- Analyse une Sexp et construit une Lexp équivalente
 s2l :: Sexp -> Lexp
 s2l (Snum n) = Lnum n
 s2l (Ssym s) = Lvar s
 s2l (se@(Scons _ _)) = let selist = sexp2list se in case selist of
     (Ssym "hastype" : e : t : []) -> Lhastype (s2l e) (s2t t)
-    (Ssym "call" : _) -> s2l' selist
-    (Ssym "fun" : _) -> s2l' selist
-    (Ssym "let" : es) -> Llet (s2d (init es)) (s2l (last es))
+    (Ssym "call" : _) -> s2l' se selist
+    (Ssym "fun" : _) -> s2l' se selist
+    (Ssym "let" : es) -> Llet (s2d se (init es)) (s2l (last es))
     (Ssym "if" : e1 : e2 : e3 : []) -> Lif (s2l e1) (s2l e2) (s2l e3)
-    (Ssym "tuple" : es) -> let tupBld [] = []
-                               tupBld (x : xs) = (s2l x) : tupBld xs
-                           in  Ltuple (tupBld es)
-    
--- ¡¡ COMPLÉTER !!
+    (Ssym "tuple" : es) -> Ltuple (map s2l es)
+    (Ssym "fetch" : tpl : xs : e : []) -> Lfetch (s2l tpl) (map (\x -> let Lvar s = s2l x in s) (sexp2list xs)) (s2l e)
     _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 s2l se = error ("Unrecognized Psil expression: " ++ (showSexp se))
-s2l' :: [Sexp] -> Lexp
-s2l' selist = case selist of
-              (Ssym "call" : e : e1 : []) -> Lcall (s2l e) (s2l e1)
-              (Ssym "call" : es) -> Lcall (s2l' ([Ssym "call"] ++ init es)) (s2l (last es))
-              (Ssym "fun" : v : e : []) -> let Lvar x = s2l v in Lfun (x) (s2l e)
-              (Ssym "fun" : v : vs) -> let Lvar x = s2l v in Lfun (x) (s2l' ([Ssym"fun"] ++ vs))
 
+-- Fonction auxiliaire de s2l traitant les cas avec récursion (currying)
+-- Fonction accomodant au sucre syntaxique d'appels et déclarations de fonction
+s2l' :: Sexp -> [Sexp] -> Lexp
+s2l' se selist = case selist of
+    (Ssym "call" : e : e1 : []) -> Lcall (s2l e) (s2l e1)
+    (Ssym "call" : es) -> Lcall (s2l' se ([Ssym "call"] ++ init es)) (s2l (last es))
+    (Ssym "fun" : v : e : []) -> let Lvar x = s2l v in Lfun (x) (s2l e)
+    (Ssym "fun" : v : vs) -> let Lvar x = s2l v in Lfun (x) (s2l' se ([Ssym"fun"] ++ vs))
+    _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
+
+-- Analyse une Sexp et construit un Ltype équivalent
+-- Appelée lorsqu'une expression indique des types
 s2t :: Sexp -> Ltype
 s2t (Ssym "Int") = Lint
--- ¡¡ COMPLÉTER !!
-s2t s = error ("Unrecognized Psil type: " ++ (showSexp s))
+s2t (Ssym "Bool") = Lboo
+s2t (se@(Scons _ _)) = let selist = sexp2list se in case selist of
+    (Ssym "Tuple" : ts) -> Ltup (map s2t ts)
+    _ | (last (init selist)) == Ssym "->" -> s2t' se selist
+      | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+s2t se = error ("Unrecognized Psil type: " ++ (showSexp se))
 
-s2d :: [Sexp] -> [(Var, Lexp)]
-s2d [] = []
-s2d (d : ds) = case sexp2list d of
-               (Ssym x : e : []) -> (x, s2l e) : s2d ds
-               (Ssym x : _ : e : []) -> (x, s2l e) : s2d ds
-               (Ssym x : es) -> ((x, s2l' ([Ssym "fun"] ++ getArgs (init(init es)) ++ [(last es)])) : s2d ds)
+-- Fonction auxiliaire de s2t traitant les cas avec récursion (currying)
+-- Fonction accomodant au sucre syntaxique de types de fonctions
+s2t' :: Sexp -> [Sexp] -> Ltype
+s2t' se selist = case selist of
+    (ta : Ssym "->" : tr : []) -> Larw (s2t ta) (s2t tr)
+    (ta : Ssym "->" : tr) -> Larw (s2t ta) (s2t' se tr)
+    _ | (last (init selist)) == Ssym "->" -> Larw (s2t (head selist)) (s2t' se (tail selist))
+      | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
 
-getArgs :: [Sexp] -> [Sexp]
-getArgs [] = []
-getArgs (a : as) = (head (sexp2list a)) : getArgs as
+-- Analyse une Sexp et construit une liste de tuple (Var, Lexp)
+-- Appelée lors de l'analyse de l'expression let où s'y trouve des déclarations
+-- La fonction getArgs récupère la variable qui est associée à son type puisque
+    -- la déclaration d'une foncion comprend ses arguments couplés à leur type
+s2d :: Sexp -> [Sexp] -> [(Var, Lexp)]
+s2d _ [] = []
+s2d se (d : ds) = let getArgs [] = []
+                      getArgs (a : as) = (head sexp2list a)) : getArgs as
+                  in  case sexp2list d of
+    (Ssym x : e : []) -> (x, s2l e) : s2d se ds
+    (Ssym x : _ : e : []) -> (x, s2l e) : s2d se ds
+    (Ssym x : es) -> ((x, s2l' se ([Ssym "fun"] ++ getArgs (init(init es)) ++ [(last es)])) : s2d se ds)
+    _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 
 ---------------------------------------------------------------------------
 -- Évaluateur                                                            --

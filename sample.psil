@@ -33,7 +33,7 @@
 (let (true (call = 0 0))
      (false (call = 0 1))
      (not (x Bool) Bool (if x false true))
-  (hastype (if (call not (call not (<= 42 0)))
+  (hastype (if (call not (call not (call <= 42 0)))
                true false)
            Bool))                       ; ↝ false
 
