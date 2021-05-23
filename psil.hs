@@ -229,10 +229,14 @@ s2l (se@(Scons _ _)) = let selist = sexp2list se in case selist of
     (Ssym "call" : _) -> s2l' selist
     (Ssym "fun" : _) -> s2l' selist
     (Ssym "let" : es) -> Llet (s2d (init es)) (s2l (last es))
+    (Ssym "if" : e1 : e2 : e3 : []) -> Lif (s2l e1) (s2l e2) (s2l e3)
+    (Ssym "tuple" : es) -> let tupBld [] = []
+                               tupBld (x : xs) = (s2l x) : tupBld xs
+                           in  Ltuple (tupBld es)
+    
 -- ¡¡ COMPLÉTER !!
     _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 s2l se = error ("Unrecognized Psil expression: " ++ (showSexp se))
-
 s2l' :: [Sexp] -> Lexp
 s2l' selist = case selist of
               (Ssym "call" : e : e1 : []) -> Lcall (s2l e) (s2l e1)
