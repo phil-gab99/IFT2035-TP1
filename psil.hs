@@ -239,7 +239,6 @@ s2l' selist = case selist of
               (Ssym "call" : es) -> Lcall (s2l' ([Ssym "call"] ++ init es)) (s2l (last es))
               (Ssym "fun" : v : e : []) -> let Lvar x = s2l v in Lfun (x) (s2l e)
               (Ssym "fun" : v : vs) -> let Lvar x = s2l v in Lfun (x) (s2l' ([Ssym"fun"] ++ vs))
-              _ -> error ("Unrecognized Psil expression")
 
 s2t :: Sexp -> Ltype
 s2t (Ssym "Int") = Lint
@@ -251,9 +250,11 @@ s2d [] = []
 s2d (d : ds) = case sexp2list d of
                (Ssym x : e : []) -> (x, s2l e) : s2d ds
                (Ssym x : _ : e : []) -> (x, s2l e) : s2d ds
-               (Ssym x : es) -> (x, s2l' (Ssym "fun" : getArgs (init es) : (last es) : []) : s2d ds)
+               (Ssym x : es) -> ((x, s2l' ([Ssym "fun"] ++ getArgs (init(init es)) ++ [(last es)])) : s2d ds)
 
-getArgs :: [Sexp] -> []
+getArgs :: [Sexp] -> [Sexp]
+getArgs [] = []
+getArgs (a : as) = (head (sexp2list a)) : getArgs as
 
 ---------------------------------------------------------------------------
 -- Évaluateur                                                            --
