@@ -273,7 +273,7 @@ s2t' se selist = case selist of
 s2d :: Sexp -> [Sexp] -> [(Var, Lexp)]
 s2d _ [] = []
 s2d se (d : ds) = let getArgs [] = []
-                      getArgs (a : as) = (head sexp2list a)) : getArgs as
+                      getArgs (a : as) = (head (sexp2list a)) : getArgs as
                   in  case sexp2list d of
     (Ssym x : e : []) -> (x, s2l e) : s2d se ds
     (Ssym x : _ : e : []) -> (x, s2l e) : s2d se ds
