@@ -354,9 +354,6 @@ eval2 senv (Lcall o a) = \venv ->
         n = (eval2 senv a) venv
     in  f n
 
--- String, Lexp
--- eval2 senv (Lfun x e) = \venv -> Vfun Nothing (\x -> (eval2 senv e) venv)
-
 ---------------------------------------------------------------------------
 -- Vérificateur de types                                                 --
 ---------------------------------------------------------------------------
