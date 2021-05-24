@@ -329,9 +329,9 @@ eval env e =
 e2lookup :: [Var] -> Var -> Int          -- Find position within environment
 e2lookup env x = e2lookup' env 0
     where e2lookup' :: [Var] -> Int -> Int
-          e2lookup' [] _ = error ("Variable inconnue: " ++ show x)
+          e2lookup' [] _ = error ("Unknown variable: " ++ show x)
           e2lookup' (x':_) i | x == x' = i
-          e2lookup' (_:xs) i = e2lookup' xs (i+1)
+          e2lookup' (_:xs) i = e2lookup' xs (i + 1)
 
 -------------- La fonction d'évaluation principale.  ------------------------
 -- Au lieu de recevoir une liste de paires (Var, Val), on passe la liste
@@ -339,7 +339,7 @@ e2lookup env x = e2lookup' env 0
 -- (`venv`) séparément de manière à ce que (eval2 senv e) renvoie une
 -- fonction qui a déjà fini d'utiliser `senv`.
 eval2 :: [Var] -> Lexp -> ([Value] -> Value)
-eval2 _    (Lnum n) = \_ -> Vnum n
+eval2 _ (Lnum n) = \_ -> Vnum n
 eval2 senv (Lhastype e _) = eval2 senv e
 eval2 senv (Lvar x) =
   -- Calcule la position que la variable aura dans `venv`.
@@ -349,6 +349,13 @@ eval2 senv (Lvar x) =
   -- plusieurs fois, on aura fait la recherche dans `senv` une seule fois.
   \venv -> venv !! i
 -- ¡¡¡ COMPLETER ICI !!! --
+eval2 senv (Lcall o a) = \venv ->
+    let Vfun _ f = (eval2 senv o) venv
+        n = (eval2 senv a) venv
+    in  f n
+
+-- String, Lexp
+-- eval2 senv (Lfun x e) = \venv -> Vfun Nothing (\x -> (eval2 senv e) venv)
 
 ---------------------------------------------------------------------------
 -- Vérificateur de types                                                 --
@@ -362,30 +369,59 @@ type TypeError = String
 tenv0 :: TEnv
 tenv0 = (map (\(x,_,t) -> (x,t)) env0)
 
+-- Recherche du type d'une variable
 tlookup :: [(Var, a)] -> Var -> a
-tlookup [] x = error ("Variable inconnue: " ++ x)
+
+tlookup [] x = error ("Unknown variable: " ++ x)
 tlookup ((x',t):_) x | x == x' = t
 tlookup (_:env) x = tlookup env x
 
+-- Règles de typage - Règle de synthèse
 infer :: TEnv -> Lexp -> Ltype
+
 infer _ (Lnum _) = Lint
 infer tenv (Lvar x) = tlookup tenv x
+
+infer tenv (Lhastype e t) | te == Nothing = t
+                          | otherwise = let Just msg = te in error msg
+                          where te = check tenv e t
+
+infer tenv (Lcall e1 e2) | te == Nothing = t2
+                         | otherwise = let Just msg = te in error msg
+                         where Larw t1 t2 = infer tenv e1
+                               te = check tenv e2 t1
+
+infer tenv (Llet [] e) = infer tenv e
+infer tenv (Llet ((vi, ei) : ds) e) =
+    infer ((vi, infer tenv ei) : tenv) (Llet ds e)
+
+infer tenv (Ltuple es) = (Ltup (map (infer tenv) es))
 infer _ (Lfun _ _)     = error "Can't infer type of `fun`"
-infer _ (Lfetch _ _ _) = error "Can't infer type of `fetch`"
 infer _ (Lif _ _ _)    = error "Can't infer type of `if`"
--- ¡¡¡ COMPLETER ICI !!! --
+infer _ (Lfetch _ _ _) = error "Can't infer type of `fetch`"
 
+-- Règles de typage - Jugement de vérification
 check :: TEnv -> Lexp -> Ltype -> Maybe TypeError
-check tenv (Lfun x body) (Larw t1 t2) = check ((x,t1):tenv) body t2
-check _ (Lfun _ _) t = Just ("Not a function type: " ++ show t)
--- ¡¡¡ COMPLETER ICI !!! --
-check tenv e t =
-    -- Essaie d'inférer le type et vérifie alors s'il correspond au
-    -- type attendu.
-    let t' = infer tenv e
-    in if t == t' then Nothing
-       else Just ("Type mismatch: " ++ show t ++ " != " ++ show t')
 
+check tenv (Lfun x body) (Larw t1 t2) = check ((x, t1) : tenv) body t2
+check _ (Lfun _ _) t = Just ("Not a function type: " ++ show t)
+
+check tenv (Lif e1 e2 e3) t | te1 /= Nothing = te1
+                            | te2 /= Nothing = te2
+                            | te3 /= Nothing = te3
+                            | otherwise = Nothing
+                            where te1 = check tenv e1 Lboo
+                                  te2 = check tenv e2 t
+                                  te3 = check tenv e3 t
+
+check tenv (Lfetch (Ltuple tup) xs e) t =
+    check ((zip (xs) (map (infer tenv) tup)) ++ tenv) e t
+
+check tenv e t =
+    -- Essaie d'inférer le type et vérifie s'il correspond au type attendu
+    let t' = infer tenv e
+    in  if t == t' then Nothing
+        else Just ("Type mismatch: " ++ show t ++ " != " ++ show t')
 
 ---------------------------------------------------------------------------
 -- Toplevel                                                              --
