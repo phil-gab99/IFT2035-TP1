@@ -207,12 +207,11 @@ data Lexp = Lnum Int                    -- Constante entière.
           | Lfetch Lexp [Var] Lexp      -- lecture d'un tuple
           deriving (Show, Eq)
 
-
 ---------------------------------------------------------------------------
 -- Conversion de Sexp à Lexp                                             --
 ---------------------------------------------------------------------------
 
--- Convertit une liste Sexp à une liste Haskell avec les éléments d'intérêts
+-- Convertit une liste Sexp en une liste Haskell avec les éléments d'intérêts
 sexp2list :: Sexp -> [Sexp]
 sexp2list s = loop s []
     where
@@ -326,7 +325,8 @@ env0 = [prim "+"  (+) Vnum  Lint,
        where prim name op cons typ =
               (name,
                Vfun (Just name)
-                    (\ (Vnum x) -> Vfun Nothing (\ (Vnum y) -> cons (x `op` y))),
+                    (\ (Vnum x) -> Vfun Nothing
+                                       (\ (Vnum y) -> cons (x `op` y))),
                Larw Lint (Larw Lint typ))
 
 -- Point d'entrée de l'évaluation
@@ -403,14 +403,12 @@ tenv0 = (map (\(x,_,t) -> (x,t)) env0)
 
 -- Recherche du type d'une variable
 tlookup :: [(Var, a)] -> Var -> a
-
 tlookup [] x = error ("Unknown variable: " ++ x)
 tlookup ((x',t):_) x | x == x' = t
 tlookup (_:env) x = tlookup env x
 
 -- Règles de typage - Règle de synthèse
 infer :: TEnv -> Lexp -> Ltype
-
 infer _ (Lnum _) = Lint
 infer tenv (Lvar x) = tlookup tenv x
 
@@ -437,7 +435,6 @@ infer _ (Lfetch _ _ _) = error "Can't infer type of `fetch`"
 
 -- Règles de typage - Jugement de vérification
 check :: TEnv -> Lexp -> Ltype -> Maybe TypeError
-
 check tenv (Lfun x body) (Larw t1 t2) = check ((x, t1) : tenv) body t2
 check _ (Lfun _ _) t = Just ("Not a function type: " ++ show t)
 
