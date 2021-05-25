@@ -42,3 +42,4 @@
 (let (plus1 (call plus 1))
      (plus (x Int) (Int -> Int) (fun y (call + y x)))
   (call plus1 5))                       ; ↝ 6
+  

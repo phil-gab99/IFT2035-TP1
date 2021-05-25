@@ -25,7 +25,6 @@ data Sexp = Snil                        -- La liste vide
           -- Génère automatiquement un pretty-printer et une fonction de
           -- comparaison structurelle.
           deriving (Show, Eq)
-          -- deriving (Eq)
 
 -- Exemples:
 -- (+ 2 3)  ==  (((() . +) . 2) . 3)
@@ -123,7 +122,7 @@ pTsil = do _ <- char '('
 pAny :: Parser (Maybe Char)
 pAny = do { c <- anyChar ; return (Just c) } <|> return Nothing
 
--- Une Sexp peut-être une liste, un symbol ou un entier.
+-- Une Sexp peut-être une liste, un symbole ou un entier.
 pSexpTop :: Parser Sexp
 pSexpTop = do { pTsil <|> pQuote <|> pSymbol
                 <|> do { x <- pAny;
@@ -225,46 +224,56 @@ sexp2list s = loop s []
 s2l :: Sexp -> Lexp
 s2l (Snum n) = Lnum n
 s2l (Ssym s) = Lvar s
-s2l (se@(Scons _ _)) = let selist = sexp2list se in case selist of
-    (Ssym "hastype" : e : t : []) -> Lhastype (s2l e) (s2t t)
-    (Ssym "call" : _) -> s2l' se selist
-    (Ssym "fun" : _) -> s2l' se selist
-    (Ssym "let" : es) -> Llet (s2d se (init es)) (s2l (last es))
-    (Ssym "if" : e1 : e2 : e3 : []) -> Lif (s2l e1) (s2l e2) (s2l e3)
-    (Ssym "tuple" : es) -> Ltuple (map s2l es)
-    (Ssym "fetch" : tpl : xs : e : []) -> Lfetch (s2l tpl) (map (\x -> let Lvar s = s2l x in s) (sexp2list xs)) (s2l e)
-    _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
+s2l (se@(Scons _ _)) =
+    let selist = sexp2list se
+    in  case selist of
+        (Ssym "hastype" : e : t : []) -> Lhastype (s2l e) (s2t t)
+        (Ssym "call" : _) -> s2l' se selist
+        (Ssym "fun" : _) -> s2l' se selist
+        (Ssym "let" : es) -> Llet (s2d se (init es)) (s2l (last es))
+        (Ssym "if" : e1 : e2 : e3 : []) -> Lif (s2l e1) (s2l e2) (s2l e3)
+        (Ssym "tuple" : es) -> Ltuple (map s2l es)
+        (Ssym "fetch" : tpl : xs : e : []) -> Lfetch (s2l tpl)
+            (map (\x -> let Lvar s = s2l x in s) (sexp2list xs)) (s2l e)
+        _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 s2l se = error ("Unrecognized Psil expression: " ++ (showSexp se))
 
 -- Fonction auxiliaire de s2l traitant les cas avec récursion (currying)
 -- Fonction accomodant au sucre syntaxique d'appels et déclarations de fonction
 s2l' :: Sexp -> [Sexp] -> Lexp
-s2l' se selist = case selist of
-    (Ssym "call" : e : e1 : []) -> Lcall (s2l e) (s2l e1)
-    (Ssym "call" : es) -> Lcall (s2l' se ([Ssym "call"] ++ init es)) (s2l (last es))
-    (Ssym "fun" : v : e : []) -> let Lvar x = s2l v in Lfun (x) (s2l e)
-    (Ssym "fun" : v : vs) -> let Lvar x = s2l v in Lfun (x) (s2l' se ([Ssym"fun"] ++ vs))
-    _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
+s2l' se selist =
+    case selist of
+        (Ssym "call" : e : e1 : []) -> Lcall (s2l e) (s2l e1)
+        (Ssym "call" : es) ->
+            Lcall (s2l' se ([Ssym "call"] ++ init es)) (s2l (last es))
+        (Ssym "fun" : v : e : []) -> let Lvar x = s2l v in Lfun (x) (s2l e)
+        (Ssym "fun" : v : vs) ->
+            let Lvar x = s2l v in Lfun (x) (s2l' se ([Ssym"fun"] ++ vs))
+        _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 
 -- Analyse une Sexp et construit un Ltype équivalent
 -- Appelée lorsqu'une expression indique des types
 s2t :: Sexp -> Ltype
 s2t (Ssym "Int") = Lint
 s2t (Ssym "Bool") = Lboo
-s2t (se@(Scons _ _)) = let selist = sexp2list se in case selist of
-    (Ssym "Tuple" : ts) -> Ltup (map s2t ts)
-    _ | (last (init selist)) == Ssym "->" -> s2t' se selist
-      | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+s2t (se@(Scons _ _)) =
+    let selist = sexp2list se
+    in  case selist of
+        (Ssym "Tuple" : ts) -> Ltup (map s2t ts)
+        _ | (last (init selist)) == Ssym "->" -> s2t' se selist
+          | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
 s2t se = error ("Unrecognized Psil type: " ++ (showSexp se))
 
 -- Fonction auxiliaire de s2t traitant les cas avec récursion (currying)
 -- Fonction accomodant au sucre syntaxique de types de fonctions
 s2t' :: Sexp -> [Sexp] -> Ltype
-s2t' se selist = case selist of
-    (ta : Ssym "->" : tr : []) -> Larw (s2t ta) (s2t tr)
-    (ta : Ssym "->" : tr) -> Larw (s2t ta) (s2t' se tr)
-    _ | (last (init selist)) == Ssym "->" -> Larw (s2t (head selist)) (s2t' se (tail selist))
-      | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+s2t' se selist =
+    case selist of
+        (ta : Ssym "->" : tr : []) -> Larw (s2t ta) (s2t tr)
+        (ta : Ssym "->" : tr) -> Larw (s2t ta) (s2t' se tr)
+        _ | (last (init selist)) == Ssym "->" ->
+              Larw (s2t (head selist)) (s2t' se (tail selist))
+          | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
 
 -- Analyse une Sexp et construit une liste de tuple (Var, Lexp)
 -- Appelée lors de l'analyse de l'expression let où s'y trouve des déclarations
@@ -272,13 +281,15 @@ s2t' se selist = case selist of
     -- la déclaration d'une foncion comprend ses arguments couplés à leur type
 s2d :: Sexp -> [Sexp] -> [(Var, Lexp)]
 s2d _ [] = []
-s2d se (d : ds) = let getArgs [] = []
-                      getArgs (a : as) = (head (sexp2list a)) : getArgs as
-                  in  case sexp2list d of
-    (Ssym x : e : []) -> (x, s2l e) : s2d se ds
-    (Ssym x : _ : e : []) -> (x, s2l e) : s2d se ds
-    (Ssym x : es) -> ((x, s2l' se ([Ssym "fun"] ++ getArgs (init(init es)) ++ [(last es)])) : s2d se ds)
-    _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
+s2d se (d : ds) =
+    let getArgs [] = []
+        getArgs (a : as) = (head (sexp2list a)) : getArgs as
+    in  case sexp2list d of
+        (Ssym x : e : []) -> (x, s2l e) : s2d se ds
+        (Ssym x : _ : e : []) -> (x, s2l e) : s2d se ds
+        (Ssym x : es) -> ((x, s2l' se ([Ssym "fun"] ++ getArgs (init(init es))
+            ++ [(last es)])) : (s2d se ds))
+        _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 
 ---------------------------------------------------------------------------
 -- Évaluateur                                                            --
@@ -350,9 +361,34 @@ eval2 senv (Lvar x) =
   \venv -> venv !! i
 -- ¡¡¡ COMPLETER ICI !!! --
 eval2 senv (Lcall o a) = \venv ->
-    let Vfun _ f = (eval2 senv o) venv
-        n = (eval2 senv a) venv
+    let Vfun _ f = evlt o
+        n = evlt a
+        evlt = \x -> (eval2 senv x) venv
     in  f n
+
+-- eval2 senv (Lfun a e) = \venv -> Vfun Nothing ()
+
+eval2 senv (Llet ds b) = \venv ->
+    let senv' = (fst(unzip ds)) ++ senv
+        venv' = (map evlt (snd(unzip ds))) ++ venv
+        evlt = \x -> (eval2 senv x) venv
+    in  ((eval2 senv' b) venv')
+
+eval2 senv (Lif e1 e2 e3) = \venv ->
+    let evlt = \x -> (eval2 senv x) venv
+    in  case evlt e1 of
+        Vbool True -> evlt e2
+        _ -> evlt e3
+
+eval2 senv (Ltuple e) = \venv ->
+    let evlt = \v -> (eval2 senv v) venv
+    in  Vtuple (map evlt e)
+
+eval2 senv (Lfetch tup vs e) = \venv ->
+    let Vtuple tuplist = (eval2 senv tup) venv
+        senv' = vs ++ senv
+        venv' = tuplist ++ venv
+    in  (eval2 senv' e) venv'
 
 ---------------------------------------------------------------------------
 -- Vérificateur de types                                                 --
@@ -379,18 +415,21 @@ infer :: TEnv -> Lexp -> Ltype
 infer _ (Lnum _) = Lint
 infer tenv (Lvar x) = tlookup tenv x
 
-infer tenv (Lhastype e t) | te == Nothing = t
-                          | otherwise = let Just msg = te in error msg
-                          where te = check tenv e t
+infer tenv (Lhastype e t)
+    | te == Nothing = t
+    | otherwise = let Just msg = te in error msg
+    where
+        te = check tenv e t
 
-infer tenv (Lcall e1 e2) | te == Nothing = t2
-                         | otherwise = let Just msg = te in error msg
-                         where Larw t1 t2 = infer tenv e1
-                               te = check tenv e2 t1
+infer tenv (Lcall e1 e2)
+    | te == Nothing = t2
+    | otherwise = let Just msg = te in error msg
+    where
+        Larw t1 t2 = infer tenv e1
+        te = check tenv e2 t1
 
-infer tenv (Llet [] e) = infer tenv e
-infer tenv (Llet ((vi, ei) : ds) e) =
-    infer ((vi, infer tenv ei) : tenv) (Llet ds e)
+infer tenv (Llet ds b) =
+    infer ((map (\(v, e) -> (v, infer tenv e)) ds) ++ tenv) b
 
 infer tenv (Ltuple es) = (Ltup (map (infer tenv) es))
 infer _ (Lfun _ _)     = error "Can't infer type of `fun`"
@@ -403,13 +442,15 @@ check :: TEnv -> Lexp -> Ltype -> Maybe TypeError
 check tenv (Lfun x body) (Larw t1 t2) = check ((x, t1) : tenv) body t2
 check _ (Lfun _ _) t = Just ("Not a function type: " ++ show t)
 
-check tenv (Lif e1 e2 e3) t | te1 /= Nothing = te1
-                            | te2 /= Nothing = te2
-                            | te3 /= Nothing = te3
-                            | otherwise = Nothing
-                            where te1 = check tenv e1 Lboo
-                                  te2 = check tenv e2 t
-                                  te3 = check tenv e3 t
+check tenv (Lif e1 e2 e3) t
+    | te1 /= Nothing = te1
+    | te2 /= Nothing = te2
+    | te3 /= Nothing = te3
+    | otherwise = Nothing
+    where
+        te1 = check tenv e1 Lboo
+        te2 = check tenv e2 t
+        te3 = check tenv e3 t
 
 check tenv (Lfetch (Ltuple tup) xs e) t =
     check ((zip (xs) (map (infer tenv) tup)) ++ tenv) e t
