@@ -23,7 +23,7 @@
 
 (let (x 1) x)                           ; ↝ 1
 
-(fetch (tuple 1 42) (x y) (call + x y)) ; ↝ 43
+(hastype (fetch (tuple 1 42) (x y) (call + x y)) Int) ; ↝ 43
 
 (hastype (if (call <= 0 42)
              (call = 0 0)
@@ -42,4 +42,3 @@
 (let (plus1 (call plus 1))
      (plus (x Int) (Int -> Int) (fun y (call + y x)))
   (call plus1 5))                       ; ↝ 6
-  
