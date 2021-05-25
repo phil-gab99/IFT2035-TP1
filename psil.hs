@@ -304,11 +304,10 @@ data Value = Vnum Int
 instance Show Value where
     showsPrec p (Vnum n) = showsPrec p n
     showsPrec p (Vbool b) = showsPrec p b
-    showsPrec p (Vtuple vs) =
-        showString "[" . showValues vs . showString "]"
-        where showValues [] = showString ""
-              showValues (v:vs') =
-                  showString " " . showsPrec p v . showValues vs'
+    showsPrec p (Vtuple vs) = showValues "[" vs
+        where showValues _ [] = showString "]"
+              showValues sep (v:vs')
+                = showString sep . showsPrec p v . showValues " " vs'
     showsPrec _ (Vfun (Just n) _) =
           showString "<fun " . showString n . showString ">"
     showsPrec _ (Vfun Nothing _) = showString "<fun>"
@@ -372,7 +371,7 @@ eval2 senv (Llet ds b) = \venv ->
     let senv' = (fst(unzip ds)) ++ senv
         venv' = (map evlt (snd(unzip ds))) ++ venv
         evlt = \x -> (eval2 senv x) venv
-    in  ((eval2 senv' b) venv')
+    in  (eval2 senv' b) venv'
 
 eval2 senv (Lif e1 e2 e3) = \venv ->
     let evlt = \x -> (eval2 senv x) venv
