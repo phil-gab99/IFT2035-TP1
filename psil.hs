@@ -215,9 +215,9 @@ data Lexp = Lnum Int                    -- Constante entière.
 sexp2list :: Sexp -> [Sexp]
 sexp2list s = loop s []
     where
-      loop (Scons hds tl) acc = loop hds (tl : acc)
-      loop Snil acc = acc
-      loop _ _ = error ("Improper list: " ++ show s)
+        loop (Scons hds tl) acc = loop hds (tl : acc)
+        loop Snil acc = acc
+        loop _ _ = error ("Improper list: " ++ show s)
 
 -- Analyse une Sexp et construit une Lexp équivalente
 s2l :: Sexp -> Lexp
@@ -225,16 +225,17 @@ s2l (Snum n) = Lnum n
 s2l (Ssym s) = Lvar s
 s2l (se@(Scons _ _)) =
     let selist = sexp2list se
-    in  case selist of
-        (Ssym "hastype" : e : t : []) -> Lhastype (s2l e) (s2t t)
-        (Ssym "call" : _) -> s2l' se selist
-        (Ssym "fun" : _) -> s2l' se selist
-        (Ssym "let" : es) -> Llet (s2d se (init es)) (s2l (last es))
-        (Ssym "if" : e1 : e2 : e3 : []) -> Lif (s2l e1) (s2l e2) (s2l e3)
-        (Ssym "tuple" : es) -> Ltuple (map s2l es)
-        (Ssym "fetch" : tpl : xs : e : []) -> Lfetch (s2l tpl)
-            (map (\x -> let Lvar s = s2l x in s) (sexp2list xs)) (s2l e)
-        _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
+    in
+        case selist of
+            (Ssym "hastype" : e : t : []) -> Lhastype (s2l e) (s2t t)
+            (Ssym "call" : _) -> s2l' se selist
+            (Ssym "fun" : _) -> s2l' se selist
+            (Ssym "let" : es) -> Llet (s2d se (init es)) (s2l (last es))
+            (Ssym "if" : e1 : e2 : e3 : []) -> Lif (s2l e1) (s2l e2) (s2l e3)
+            (Ssym "tuple" : es) -> Ltuple (map s2l es)
+            (Ssym "fetch" : tpl : xs : e : []) -> Lfetch (s2l tpl)
+                (map (\x -> let Lvar s = s2l x in s) (sexp2list xs)) (s2l e)
+            _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 s2l se = error ("Unrecognized Psil expression: " ++ (showSexp se))
 
 -- Fonction auxiliaire de s2l traitant les cas avec récursion (currying)
@@ -256,11 +257,14 @@ s2t :: Sexp -> Ltype
 s2t (Ssym "Int") = Lint
 s2t (Ssym "Bool") = Lboo
 s2t (se@(Scons _ _)) =
-    let selist = sexp2list se
-    in  case selist of
-        (Ssym "Tuple" : ts) -> Ltup (map s2t ts)
-        _ | (last (init selist)) == Ssym "->" -> s2t' se selist
-          | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+    let
+        selist = sexp2list se
+    in
+        case selist of
+            (Ssym "Tuple" : ts) -> Ltup (map s2t ts)
+            _ | (last (init selist)) == Ssym "->" -> s2t' se selist
+              | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+
 s2t se = error ("Unrecognized Psil type: " ++ (showSexp se))
 
 -- Fonction auxiliaire de s2t traitant les cas avec récursion (currying)
@@ -276,19 +280,27 @@ s2t' se selist =
 
 -- Analyse une Sexp et construit une liste de tuple (Var, Lexp)
 -- Appelée lors de l'analyse de l'expression let où s'y trouve des déclarations
--- La fonction getArgs récupère la variable qui est associée à son type puisque
-    -- la déclaration d'une foncion comprend ses arguments couplés à leur type
+-- Les fonctions getArgs et getTypes récupèrent les variables et les types
+    -- associées à une fonction lors d'une déclaration afin de fournir
+    -- les informations nécessaires aux étapes d'inférence de types et
+    -- d'évaluation d'expression
 s2d :: Sexp -> [Sexp] -> [(Var, Lexp)]
 s2d _ [] = []
 s2d se (d : ds) =
-    let getArgs [] = []
-        getArgs (a : as) = (head (sexp2list a)) : getArgs as
-    in  case sexp2list d of
-        (Ssym x : e : []) -> (x, s2l e) : s2d se ds
-        (Ssym x : _ : e : []) -> (x, s2l e) : s2d se ds
-        (Ssym x : es) -> ((x, s2l' se ([Ssym "fun"] ++ getArgs (init(init es))
-            ++ [(last es)])) : (s2d se ds))
-        _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
+    let
+        getArgs [] = []
+        getArgs (a : as) = (head (sexp2list a)) : getArgs as 
+        getTypes [] = error "Type not specified"
+        getTypes (t : []) = t : []
+        getTypes (t : ts) = (last (sexp2list t)) : Ssym "->" : getTypes ts
+    in
+        case sexp2list d of
+            (Ssym x : e : []) -> (x, s2l e) : s2d se ds
+            (Ssym x : t : e : []) -> (x, Lhastype (s2l e) (s2t t)) : s2d se ds
+            (Ssym x : es) -> (x, Lhastype
+                (s2l' se ([Ssym "fun"] ++ getArgs (init(init es)) ++ [(last es)]))
+                (s2t' se (getTypes (init es)))) : (s2d se ds)
+            _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 
 ---------------------------------------------------------------------------
 -- Évaluateur                                                            --
@@ -352,42 +364,55 @@ eval2 :: [Var] -> Lexp -> ([Value] -> Value)
 eval2 _ (Lnum n) = \_ -> Vnum n
 eval2 senv (Lhastype e _) = eval2 senv e
 eval2 senv (Lvar x) =
-  -- Calcule la position que la variable aura dans `venv`.
-  let i = e2lookup senv x in
-  -- Renvoie une fonction qui n'a plus besoin de charcher et comparer le nom.
-  -- De cette manière, si la fonction renvoyée par (eval2 senv v) est appelée
-  -- plusieurs fois, on aura fait la recherche dans `senv` une seule fois.
-  \venv -> venv !! i
+    -- Calcule la position que la variable aura dans `venv`.
+    let
+        i = e2lookup senv x
+    -- Renvoie une fonction qui n'a plus besoin de charcher et comparer le nom.
+    -- De cette manière, si la fonction renvoyée par (eval2 senv v) est appelée
+    -- plusieurs fois, on aura fait la recherche dans `senv` une seule fois.
+    in
+        \venv -> venv !! i
 -- ¡¡¡ COMPLETER ICI !!! --
 eval2 senv (Lcall o a) = \venv ->
-    let Vfun _ f = evlt o
+    let
+        Vfun _ f = evlt o
         n = evlt a
         evlt = \x -> (eval2 senv x) venv
-    in  f n
+    in
+        f n
 
--- eval2 senv (Lfun a e) = \venv -> Vfun Nothing ()
+eval2 senv (Lfun a e) =
+    \venv -> (Vfun Nothing (\v -> (eval2 (a : senv) e) (v : venv)))
 
 eval2 senv (Llet ds b) = \venv ->
-    let senv' = (fst(unzip ds)) ++ senv
+    let
+        senv' = (fst(unzip ds)) ++ senv
         venv' = (map evlt (snd(unzip ds))) ++ venv
-        evlt = \x -> (eval2 senv x) venv
-    in  (eval2 senv' b) venv'
+        evlt = \v -> ((eval2 senv' v) venv')
+    in
+        ((eval2 senv' b) venv')
 
 eval2 senv (Lif e1 e2 e3) = \venv ->
-    let evlt = \x -> (eval2 senv x) venv
-    in  case evlt e1 of
-        Vbool True -> evlt e2
-        _ -> evlt e3
+    let
+        evlt = \x -> (eval2 senv x) venv
+    in
+        case evlt e1 of
+            Vbool True -> evlt e2
+            _ -> evlt e3
 
 eval2 senv (Ltuple e) = \venv ->
-    let evlt = \v -> (eval2 senv v) venv
-    in  Vtuple (map evlt e)
+    let
+        evlt = \v -> (eval2 senv v) venv
+    in
+        Vtuple (map evlt e)
 
 eval2 senv (Lfetch tup vs e) = \venv ->
-    let Vtuple tuplist = (eval2 senv tup) venv
+    let
+        Vtuple tuplist = (eval2 senv tup) venv
         senv' = vs ++ senv
         venv' = tuplist ++ venv
-    in  (eval2 senv' e) venv'
+    in
+        (eval2 senv' e) venv'
 
 ---------------------------------------------------------------------------
 -- Vérificateur de types                                                 --
@@ -426,7 +451,13 @@ infer tenv (Lcall e1 e2)
         te = check tenv e2 t1
 
 infer tenv (Llet ds b) =
-    infer ((map (\(v, e) -> (v, infer tenv e)) ds) ++ tenv) b
+    let
+        (tenvn, tenvt) = unzip tenv
+        (vars, exps) = unzip ds
+        tenvn' = vars ++ tenvn
+        tenvt' = (map (\e -> infer (zip tenvn' tenvt') e) exps) ++ tenvt
+    in
+        infer (zip tenvn' tenvt') b
 
 infer tenv (Ltuple es) = (Ltup (map (infer tenv) es))
 infer _ (Lfun _ _)     = error "Can't infer type of `fun`"
@@ -453,8 +484,10 @@ check tenv (Lfetch (Ltuple tup) xs e) t =
 
 check tenv e t =
     -- Essaie d'inférer le type et vérifie s'il correspond au type attendu
-    let t' = infer tenv e
-    in  if t == t' then Nothing
+    let
+        t' = infer tenv e
+    in
+        if t == t' then Nothing
         else Just ("Type mismatch: " ++ show t ++ " != " ++ show t')
 
 ---------------------------------------------------------------------------
