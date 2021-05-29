@@ -499,7 +499,13 @@ check tenv (Lif e1 e2 e3) t
         te3 = check tenv e3 t
 
 check tenv (Lfetch (Ltuple tup) xs e) t =
-    check ((zip (xs) (map (infer tenv) tup)) ++ tenv) e t
+    let
+        tuplength = length tup
+        varlength = length xs
+    in
+        if tuplength /= varlength
+        then error ("Tuple length and number of variables mismatch: " ++ show tuplength " != "  ++ show varlength)
+        else check ((zip (xs) (map (infer tenv) tup)) ++ tenv) e t
 
 check tenv e t =
     -- Essaie d'inférer le type et vérifie s'il correspond au type attendu
