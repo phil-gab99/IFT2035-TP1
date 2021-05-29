@@ -229,11 +229,20 @@ s2l (se@(Scons _ _)) =
     in
         case selist of
             (Ssym "hastype" : e : t : []) -> Lhastype (s2l e) (s2t t)
-            (Ssym "call" : _) -> s2l' se selist
-            (Ssym "fun" : _) -> s2l' se selist
-            (Ssym "let" : es) -> Llet (s2d se (init es)) (s2l (last es))
+            (Ssym "call" : es) ->
+                if length es < 2
+                then error ("Insufficient arguments for expression " ++ (showSexp se))
+                else s2l' se selist
+            (Ssym "fun" : es) ->
+                if length es < 2
+                then error ("Insufficient arguments for expression " ++ (showSexp se))
+                else s2l' se selist
+            (Ssym "let" : es) ->
+                if length es < 2
+                then error ("Insufficient arguments for expression " ++ (showSexp se))
+                else Llet (s2d se (init es)) (s2l (last es))
             (Ssym "if" : e1 : e2 : e3 : []) -> Lif (s2l e1) (s2l e2) (s2l e3)
-            (Ssym "tuple" : es) -> Ltuple (map s2l es)
+            (Ssym "tuple" : es) -> Ltuple (map s2l es) -- change if necessary
             (Ssym "fetch" : tpl : xs : e : []) -> Lfetch (s2l tpl)
                 (map (\x -> let Lvar s = s2l x in s) (sexp2list xs)) (s2l e)
             _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
@@ -247,7 +256,10 @@ s2l' se selist =
         (Ssym "call" : e : e1 : []) -> Lcall (s2l e) (s2l e1)
         (Ssym "call" : es) ->
             Lcall (s2l' se ([Ssym "call"] ++ init es)) (s2l (last es))
-        (Ssym "fun" : v : e : []) -> let Lvar x = s2l v in Lfun (x) (s2l e)
+        (Ssym "fun" : v : e : []) ->
+            case s2l v of
+                Lvar x -> Lfun (x) (s2l e)
+                _ -> error ("Argument placements ")
         (Ssym "fun" : v : vs) ->
             let Lvar x = s2l v in Lfun (x) (s2l' se ([Ssym"fun"] ++ vs))
         _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
