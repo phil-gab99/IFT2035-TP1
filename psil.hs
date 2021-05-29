@@ -307,14 +307,18 @@ s2d se (d : ds) =
         getTypes [] = error "Type not specified"
         getTypes (t : []) = t : []
         getTypes (t : ts) = (last (sexp2list t)) : Ssym "->" : getTypes ts
+        selist = sexp2list d
     in
-        case sexp2list d of
-            (Ssym x : e : []) -> (x, s2l e) : s2d se ds
-            (Ssym x : t : e : []) -> (x, Lhastype (s2l e) (s2t t)) : s2d se ds
-            (Ssym x : es) -> (x, Lhastype
-                (s2l' se ([Ssym "fun"] ++ getArgs (init(init es)) ++ [(last es)]))
-                (s2t' se (getTypes (init es)))) : (s2d se ds)
-            _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
+        if length selist < 2
+        then error ("Invalid declaration: " ++ (showSexp se))
+        else 
+            case selist of
+                (Ssym x : e : []) -> (x, s2l e) : s2d se ds
+                (Ssym x : t : e : []) -> (x, Lhastype (s2l e) (s2t t)) : s2d se ds
+                (Ssym x : es) -> (x, Lhastype
+                    (s2l' se ([Ssym "fun"] ++ getArgs (init(init es)) ++ [(last es)]))
+                    (s2t' se (getTypes (init es)))) : (s2d se ds)
+                _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 
 ---------------------------------------------------------------------------
 -- Évaluateur                                                            --
