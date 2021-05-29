@@ -258,10 +258,12 @@ s2l' se selist =
             Lcall (s2l' se ([Ssym "call"] ++ init es)) (s2l (last es))
         (Ssym "fun" : v : e : []) ->
             case s2l v of
-                Lvar x -> Lfun (x) (s2l e)
-                _ -> error ("Argument placements ")
+                Lvar x -> Lfun x (s2l e)
+                _ -> error ("Couldn't match expected arguments in: " ++ (showSexp se))
         (Ssym "fun" : v : vs) ->
-            let Lvar x = s2l v in Lfun (x) (s2l' se ([Ssym"fun"] ++ vs))
+            case s2l v of
+                Lvar x -> Lfun x (s2l' se ([Ssym"fun"] ++ vs))
+                _ -> error ("Couldn't match expected arguments in: " ++ (showSexp se))
         _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 
 -- Analyse une Sexp et construit un Ltype équivalent
