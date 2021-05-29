@@ -244,7 +244,10 @@ s2l (se@(Scons _ _)) =
             (Ssym "if" : e1 : e2 : e3 : []) -> Lif (s2l e1) (s2l e2) (s2l e3)
             (Ssym "tuple" : es) -> Ltuple (map s2l es) -- change if necessary
             (Ssym "fetch" : tpl : xs : e : []) -> Lfetch (s2l tpl)
-                (map (\x -> let Lvar s = s2l x in s) (sexp2list xs)) (s2l e)
+                (map (\x -> case s2l x of
+                    Lvar s -> s
+                    _ -> error ("Couldn't match expected arguments in: " ++ (showSexp se)))
+                (sexp2list xs)) (s2l e)
             _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 s2l se = error ("Unrecognized Psil expression: " ++ (showSexp se))
 
@@ -262,7 +265,7 @@ s2l' se selist =
                 _ -> error ("Couldn't match expected arguments in: " ++ (showSexp se))
         (Ssym "fun" : v : vs) ->
             case s2l v of
-                Lvar x -> Lfun x (s2l' se ([Ssym"fun"] ++ vs))
+                Lvar x -> Lfun x (s2l' se ([Ssym "fun"] ++ vs))
                 _ -> error ("Couldn't match expected arguments in: " ++ (showSexp se))
         _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
 
@@ -275,7 +278,7 @@ s2t (se@(Scons _ _)) =
     let
         selist = sexp2list se
     in
-        case selist of
+        case selist of -- Modify according to answer
             (Ssym "Tuple" : ts) -> Ltup (map s2t ts)
             _ | (last (init selist)) == Ssym "->" -> s2t' se selist
               | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
@@ -318,7 +321,7 @@ s2d se (d : ds) =
                 (Ssym x : es) -> (x, Lhastype
                     (s2l' se ([Ssym "fun"] ++ getArgs (init(init es)) ++ [(last es)]))
                     (s2t' se (getTypes (init es)))) : (s2d se ds)
-                _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
+                _ -> error ("Unrecognized Psil declaration: " ++ (showSexp se))
 
 ---------------------------------------------------------------------------
 -- Évaluateur                                                            --
@@ -504,7 +507,8 @@ check tenv (Lfetch (Ltuple tup) xs e) t =
         varlength = length xs
     in
         if tuplength /= varlength
-        then error ("Tuple length and number of variables mismatch: " ++ show tuplength " != "  ++ show varlength)
+        then error ("Tuple length and number of variables mismatch: " ++
+            show tuplength ++ " != "  ++ show varlength)
         else check ((zip (xs) (map (infer tenv) tup)) ++ tenv) e t
 
 check tenv e t =
