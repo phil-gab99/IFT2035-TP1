@@ -274,7 +274,6 @@ s2t' :: Sexp -> [Sexp] -> Ltype
 s2t' se selist =
     case selist of
         (ta : Ssym "->" : tr : []) -> Larw (s2t ta) (s2t tr)
-        (ta : Ssym "->" : tr) -> Larw (s2t ta) (s2t' se tr)
         _ | (last (init selist)) == Ssym "->" ->
               Larw (s2t (head selist)) (s2t' se (tail selist))
           | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
