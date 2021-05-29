@@ -372,7 +372,7 @@ eval2 senv (Lvar x) =
     -- plusieurs fois, on aura fait la recherche dans `senv` une seule fois.
     in
         \venv -> venv !! i
--- ¡¡¡ COMPLETER ICI !!! --
+
 eval2 senv (Lcall o a) = \venv ->
     let
         Vfun _ f = evlt o
