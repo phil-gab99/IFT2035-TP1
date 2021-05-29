@@ -1,31 +1,285 @@
-\documentclass[12pt, titlepage]{article}
+\documentclass[11pt, titlepage]{article}
 \usepackage{fullpage}
 \usepackage{amsmath, amssymb}
+\usepackage{microtype}
+
+\usepackage{setspace}
+
+% Code snippets
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+    language=Haskell,
+    showstringspaces=false,
+    columns=flexible,
+    basicstyle={\small\ttfamily},
+    numbers=none,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{dkgreen},
+    stringstyle=\color{mauve},
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4
+}
+
+\begin{document}
 
 \title{{\Huge \textbf{TP1 - Rapport}}}
 \author{Philippe Gabriel \\ Dana Seif-Eddine}
 \date{30 mai 2021}
 
-\begin{document}
+\onehalfspacing
+
 \maketitle
+
+\pagenumbering{arabic}
+\setcounter{page}{2}
+
+\newpage
 
 \section{Syntaxe de Psil}
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-\subsection{Sucre syntaxique}
+La syntaxe de ce langage fonctionnel était assez simple à saisir, surtout
+après avoir regardé les simples exemples dans le fichier \texttt{sample.psil}.
+Pour la plupart des règles syntaxiques, nous avions presqu'immédiatement pu
+associer une sémantique à chacune de celles-ci. La syntaxe étant préfixe a
+grandement simplifié l'analyse d'expressions et leur conversion.
 
 \subsection{Implantation - Conversion de Sexp à Lexp}
 
-\section{Comparaison avec Lisp}
+Un élément important que nous avions fait avant de commencer notre
+implémentation de code était de rapidement survoler la section du code traitant
+la première phase déjà fournit, visant à transformer le code source en une
+représentation \texttt{Sexp}. Le but était de se familiariser avec les
+définitions et fonctions utiles pour compléter la seconde phase.
+Un premier défi par la suite était de bien comprendre la représentation
+\texttt{Sexp} provenant d'une expression \texttt{Psil}. Pour le surmonter, nous
+avions utilisé la fonction \texttt{sexpOf} sur certains
+exemples de ceux donnés, pour ensuite en refaire la trace et comprendre l'ordre
+de construction de l'expression en \texttt{Psil} vers une \texttt{Sexp}. \\
+
+Par après, la conversion d'une \texttt{Sexp} en \texttt{Lexp} s'est déroulée
+assez simplement et rapidement. Après s'être familiariser avec le comportement
+de la fonction \texttt{sexp2list}, la conversion des expressions \texttt{if},
+\texttt{tuple} et \texttt{fetch} étaient assez directes. \\
+Pour l'expression \texttt{call}, afin de satisfaire son caractère curried, une
+première solution était de repasser en argument à \texttt{s2l} le premier
+argument du constructeur \texttt{Scons}. Pour cela, nous avions modifié le code
+comme-ci:
+\begin{lstlisting}
+s2l (se@(Scons se1 _)) = -- Modification ici
+    case sexp2list se
+        ...
+        (Ssym "call" : e : e1 : []) -> Lcall (s2l e) (s2l e1)
+        (Ssym "call" : en) -> Lcall (s2l se1) (s2l (last en))
+\end{lstlisting}
+
+Cette implémentation fonctionnait comme souhaité, mais une approche similaire
+ne fut pas possible pour \texttt{fun}. De plus, nous avons réalisé que le temps
+de calcul pour gérer le cas d'un appel de fonction est loin d'être optimal en
+raison du fait que l'on repasse une portion de notre \texttt{Sexp} à
+\texttt{s2l} pour la reconvertir avec \texttt{sexp2list} en une liste ce qui
+est du travail inutile puisque l'on possède de la représentation en liste
+désirée. Il fut donc nécessaire de légèrement remodifier la définition de la
+fonction principale \texttt{s2l} comme suit:
+\begin{lstlisting}
+s2l (se@(Scons _ _)) =
+    let
+        selist = sexp2list se -- Modification ici
+    in
+        ...
+        (Ssym "call" : _) -> s2l' se selist
+        (Ssym "fun" : _) -> s2l' se selist
+\end{lstlisting}
+où nous avions simplement dénoté l'expansion de la \texttt{Sexp} sous le nom de
+la variable \texttt{selist}. La raison du changement est pour ensuite faire
+appel à la fonction \texttt{s2l'}, une fonction auxiliaire capable de traiter
+les cas récursifs que l'on retrouve dans \texttt{call} et \texttt{fun}. \\
+Finalement, pour l'expression \texttt{let}, il a été important de penser aux
+différentes syntaxes de déclarations qu'offrent le langage \texttt{Psil}. Il a
+été donc nécessaire de définir une fonction \texttt{s2d} qui traite les
+différents cas possibles. \\
+
+En ce qui concerne les types, les cas de \texttt{Bool} et \texttt{Tuple} furent
+assez direct. Par contre, pour le type des fonctions, il fut nécessaire, tout
+comme dans le cas de \texttt{s2l}, de redéfinir la fonction \texttt{s2t} en
+dénotant l'expansion de en liste et en définissant une fonction auxiliaire
+\texttt{s2t'} pour gérer l'aspect curried du type des fonctions.
+
+\subsection{Sucre syntaxique}
+
+Après l'implémentation assez direct de la syntaxe du langage, nous nous sommes
+tournés vers le sucre syntaxique et les différentes équivalences de syntaxe
+qu'offre le langage. \\
+
+Pour ce qui est de la syntaxe des expressions, notre définition initiale
+supportait déjà les différentes variantes acceptées. \\
+
+Pour ce qui est de la syntaxe des déclarations, au début de ce projet il ne
+semblait pas nécessaire qu'après être rendu à la fin du projet de modifier
+notre implantation initiale. Nous avions pris note des différentes équivalences
+entre déclarations mais ne savions pas tout à fait pourquoi et comment, à ce
+stade, modifier notre définition qui ne faisait que directement traduire une
+déclaration en ses \texttt{Lexp} et \texttt{Ltype} correspondants. \\
+Lors de l'exécution de tests, il y eut des problèmes dans la vérification et
+l'évaluation de certaines expressions. Nous nous sommes souvenues de notre note
+initiale, et avions par après modifier les traductions de déclarations de sorte
+à les convertir à la forme suivante:
+\begin{equation*}
+    \begin{aligned}
+        & (x \ (x_1 \ \tau_1) \ ... \ (x_n \ \tau_n) \ \tau \ e) && \implies \\
+        & (x \ (\tau_1 \ ... \ \tau_n \rightarrow \tau) \ (\text{fun} \
+            (x_1 \ ... \ x_n) \ e)) && \implies \\
+        & (x \ \tau \ e) && \implies (x \ (\text{hastype} \ e \ \tau))
+    \end{aligned}
+\end{equation*}
+Ce que les implications ci-dessus décrivent:
+\begin{itemize}
+    \item C'est que la déclaration d'une fonction peut être réécrite en
+    spécifiant le type sous une forme currifiée et le corps comme étant une
+    fonction;
+    \item Qui à son tour peut être réécrite comme toute déclaration de variable
+    avec son type;
+    \item Qui peut être réécrite l'aide de l'expression \texttt{hastype}.
+\end{itemize}
+Cette dernière réécriture est celle qui est préférée pour la vérification de
+types qui suit et donc \texttt{s2t} ainsi que \texttt{s2t'} ont été redéfinies
+afin de réécrire la \texttt{Sexp} en \texttt{Lexp} sous la forme désirée.
 
 \section{Règles de typage}
 
-\section{Notes}
+Les règles de typages fournies étaient assez intuitives dans le choix de
+notation, et ont servis de base de la complétion des fonctions \texttt{infer}
+et \texttt{check}.
 
-Had trouble with evaluating function for a while
-Let implementation follows that of Lisp's let*
-Problems with implementing a letrec
-Fixed by including every new iteration of value environment
+\subsection{Implantation - Vérificateur de types}
+
+Cette partie de l'implantation s'est déroulée très rapidement. En suivant les
+règles de typage du langage, il y a cette correspondance directe entre les
+règles et l'implantation. Au fur et à mesure que l'on introduisait une nouvelle
+expression, des tests rapides à l'aide la fonction \texttt{typeOf} venait
+confirmer que notre implantation s'est bien faite.
+
+\section{Règles d'évaluation}
+
+Les règles d'évaluation étaient assez intuitives et les \(\beta\)-réductions
+appliquées étaient prises en notes lors de cette phase. La seule règle qui ne
+figurait pas dans les instructions étaient celle propre aux fonctions (pas
+l'appel de fonction). Après le survol du code, nous nous sommes basés sur la
+forme des fonctions prédéfinies du langages pour déterminer la forme attendue
+de l'évaluation d'une fonction. On note également une correspondance directe
+directe des constructeurs de types de \texttt{Value} avec ceux de
+\texttt{Ltype} ce qui nous a indiqué précisément le type de résultat de
+l'évaluation des divers expressions.
+
+\subsection{Implantation - Évaluateur}
+
+À la lumière des remarques et note ci-dessus, l'évaluation des expressions
+\texttt{call}, \texttt{let}, \texttt{if}, \texttt{tuple} et \texttt{fetch}
+furent assez directs et simples. Le cas qui a prouvé être difficile est celui
+de \texttt{fun} pour lequel il n'était pas clair à vue d'oeil directement
+comment décrire son évaluation. Comme première idée, nous avions remarqué que
+le type semble être nécessaire pour l'évaluation d'une fonction, et donc avions
+modifié le code comme suit:
+
+\begin{lstlisting}
+eval2 senv (Lhastype e t) =
+    case t of
+    Larw _ _ -> eval2fun senv e t
+    _ -> eval2 senv e
+\end{lstlisting}
+
+Cette idée semblait être la seule solution possible à ce temps, mais on était
+pas arrivé à déterminer une forme générale pour toutes fonctions. C'est alors
+que nous avions pensé à une alternative, sans avoir besoin du type de la
+fonction, où la valeur de celle-ci sera déterminer au moment après qu'elle soit
+définie. Et donc, le code modifié précédemment a été remis tel qu'il était
+et notre idée alternative sur l'évaluation d'une fonction est comme suit:
+
+\begin{lstlisting}
+eval2 senv (Lfun a e) =
+    \venv -> (Vfun Nothing (\v -> (eval2 (a : senv) e) (v : venv)))
+\end{lstlisting}
+
+\section{Tests}
+
+L'étape qui suit à ce point est de tester notre implémentation sur des
+exemples. Nous avions employé pour commencer les tests qui figurent dans le
+fichier \texttt{sample.psil}. On voyait que tous les tests passaient sauf deux
+en particulier:
+\begin{itemize}
+    \item La vérification de types de l'expression contenant une déclaration de
+    fonction faisant référence à deux déclarations qui la précédait (l'avant-
+    avant dernier exemple);
+    \item La vérification et l'évaluation de l'expression contenant une
+    déclaration de fonction faisant référence à une autre déclaration qui la
+    suivait (le dernier exemple).
+\end{itemize}
+
+Dans les deux cas, il s'agissait de déclaration de fonctions, et le problème
+survenait en raison du fait que nous n'avions pas tout à fait bien implémenté
+l'équivalence syntaxique de typage, décrite dans la section du sucre
+syntaxique. \\
+
+Dans les deus cas, il y avait un problème se posant dans la vérification de
+types de déclarations faisant référence à précédentes ou successives
+déclarations. Cela a été corrigé après 2 itérations en modifiant légèrement
+l'ordre d'instructions et la façon dont on entreprenait la mise-à-jour de
+l'environnement de types qui est comme suit:
+
+\begin{lstlisting}
+-- Iteration 1 - Erreur dans declarations successives
+infer tenv (Llet [] e) = infer tenv e
+infer tenv (Llet ((vi, ei) : ds) e) =
+    infer ((vi, infer tenv ei) : tenv) (Llet ds e)
+
+-- Iteration 2 - Erreur dans declarations precedentes
+infer tenv (Llet ds b) =
+    infer ((map (\(v, e) -> (v, infer tenv e)) ds) ++ tenv) b
+
+-- Iteration 3 - Aucune erreur
+infer tenv (Llet ds b) =
+    let
+        (tenvn, tenvt) = unzip tenv
+        (vars, exps) = unzip ds
+        tenvn' = vars ++ tenvn
+        tenvt' = (map (\e -> infer (zip tenvn' tenvt') e) exps) ++ tenvt
+    in
+        infer (zip tenvn' tenvt') b
+\end{lstlisting}
+
+Les cas d'erreurs qui sont survenues s'apparente au \texttt{let} et
+\texttt{let*} du langage \texttt{Lisp}. Avec la dernière itération, l'idée d'un
+\texttt{letrec} a été implémentée. On remarque, si l'on suit les instructions
+de près, comment la procédure diffère d'une itération à l'autre. \\
+
+Dans le second cas, un problème d'évaluation survenait dans le cas où une
+déclaration faisait référence à une déclaration successive. La solution suit de
+très près celle discutée pour le cas de vérification de types:
+
+\begin{lstlisting}
+-- Iteration 1 - Erreur dans declarations successives
+eval2 senv (Llet [] b) = (eval2 senv b)
+eval2 senv (Llet ((v, e) : ds) b) =
+    \venv -> ((eval2 (v : senv) (Llet ds b)) (((eval2 senv e) venv) : venv))
+
+-- Iteration 2 - Aucune erreur
+eval2 senv (Llet ds b) = \venv ->
+    let
+        (vars, exps) = unzip ds
+        senv' = vars ++ senv
+        venv' = (map evlt exps) ++ venv
+        evlt = \v -> ((eval2 senv' v) venv')
+    in
+        ((eval2 senv' b) venv')
+\end{lstlisting}
+
+Suite à ces corrections, tous les tests du fichier ont passé.
 
 \end{document}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020/W32TeX) (preloaded format=pdflatex 2021.1.31)  23 MAY 2021 06:49
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020/W32TeX) (preloaded format=pdflatex 2021.1.31)  29 MAY 2021 06:57
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -8,8 +8,8 @@ LaTeX2e <2020-10-01> patch level 4
 L3 programming layer <2021-01-09> xparse <2020-03-03>
 (c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2020/04/10 v1.4m Standard LaTeX document class
-(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/base/size12.clo
-File: size12.clo 2020/04/10 v1.4m Standard LaTeX file (size option)
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/base/size11.clo
+File: size11.clo 2020/04/10 v1.4m Standard LaTeX file (size option)
 )
 \c@part=\count177
 \c@section=\count178
@@ -94,59 +94,212 @@ LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 (Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
 ))
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/microtype/microtype.s
+ty
+Package: microtype 2020/12/07 v2.8 Micro-typographical refinements (RS)
+
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks20
+)
+\MT@toks=\toks21
+\MT@count=\count197
+LaTeX Info: Redefining \textls on input line 788.
+\MT@outer@kern=\dimen148
+LaTeX Info: Redefining \textmicrotypecontext on input line 1358.
+\MT@listname@count=\count198
+
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/microtype/microtype-p
+dftex.def
+File: microtype-pdftex.def 2020/12/07 v2.8 Definitions specific to pdftex (RS)
+LaTeX Info: Redefining \lsstyle on input line 915.
+LaTeX Info: Redefining \lslig on input line 915.
+\MT@outer@space=\skip53
+)
+Package microtype Info: Loading configuration file microtype.cfg.
+
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/microtype/microtype.c
+fg
+File: microtype.cfg 2020/12/07 v2.8 microtype main configuration file (RS)
+))
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/setspace/setspace.sty
+Package: setspace 2011/12/19 v6.7a set line spacing
+)
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/listings/listings.sty
+\lst@mode=\count199
+\lst@gtempboxa=\box49
+\lst@token=\toks22
+\lst@length=\count266
+\lst@currlwidth=\dimen149
+\lst@column=\count267
+\lst@pos=\count268
+\lst@lostspace=\dimen150
+\lst@width=\dimen151
+\lst@newlines=\count269
+\lst@lineno=\count270
+\lst@maxwidth=\dimen152
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
+\c@lstnumber=\count271
+\lst@skipnumbers=\count272
+\lst@framebox=\box50
+)
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/listings/listings.cfg
+File: listings.cfg 2020/03/24 1.8d listings configuration
+))
+Package: listings 2020/03/24 1.8d (Carsten Heinz)
+ (c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/graphics/color.sty
+Package: color 2020/02/24 v1.2b Standard LaTeX Color (DPC)
+
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/graphics-cfg/color.cf
+g
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package color Info: Driver file: pdftex.def on input line 147.
+
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/graphics-def/pdftex.d
+ef
+File: pdftex.def 2020/10/05 v1.2a Graphics/color driver for pdftex
+))
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2020/03/24 1.8d listings language file
+)
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/listings/lstlang2.sty
+File: lstlang2.sty 2020/03/24 1.8d listings language file
+)
 (c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/l3backend/l3backend-p
 dftex.def
 File: l3backend-pdftex.def 2020-01-29 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count197
-\l__pdf_internal_box=\box49
+\l__color_backend_stack_int=\count273
+\l__pdf_internal_box=\box51
 ) (./rapport.aux)
 \openout1 = `rapport.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 10.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Info: Redefining \microtypecontext on input line 31.
+Package microtype Info: Generating PDF output.
+Package microtype Info: Character protrusion enabled (level 2).
+Package microtype Info: Using default protrusion set `alltext'.
+Package microtype Info: Automatic font expansion enabled (level 2),
+(microtype)             stretch: 20, shrink: 20, step: 1, non-selected.
+Package microtype Info: Using default expansion set `alltext-nott'.
+LaTeX Info: Redefining \showhyphens on input line 31.
+Package microtype Info: No adjustment of tracking.
+Package microtype Info: No adjustment of interword spacing.
+Package microtype Info: No adjustment of character kerning.
 
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/microtype/mt-cmr.cfg
+File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
+(RS)
+)
+\c@lstlisting=\count274
 
-(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/amsfonts/umsa.fd
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/context/base/mkii/supp-pdf.
+mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count275
+\scratchdimen=\dimen153
+\scratchbox=\box52
+\nofMPsegments=\count276
+\nofMParguments=\count277
+\everyMPshowfont=\toks23
+\MPscratchCnt=\count278
+\MPscratchDim=\dimen154
+\MPnumerator=\count279
+\makeMPintoPDFobject=\count280
+\everyMPtoPDFconversion=\toks24
+)
+LaTeX Font Info:    Trying to load font information for U+msa on input line 39.
+
+ (c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 10.
-
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/microtype/mt-msa.cfg
+File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 39.
 
 (c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-[1
+(c:/Program Files (x86)/texlive/2020/texmf-dist/tex/latex/microtype/mt-msb.cfg
+File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
+) [1
 
 {c:/Program Files (x86)/texlive/2020/texmf-var/fonts/map/pdftex/updmap/pdftex.m
-ap}] [1] (./rapport.aux) ) 
+ap}]
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `cmtt' (encoding: OT1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--66
+
+ []
+
+[2]
+Underfull \hbox (badness 10000) in paragraph at lines 100--108
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 117--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--123
+
+ []
+
+[3] [4]
+Underfull \hbox (badness 10000) in paragraph at lines 225--229
+
+ []
+
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 257--261
+
+ []
+
+[6] (./rapport.aux) ) 
 Here is how much of TeX's memory you used:
- 1586 strings out of 479304
- 21395 string characters out of 5861285
- 292171 words of memory out of 5000000
- 18817 multiletter control sequences out of 15000+600000
- 408145 words of font info for 45 fonts, out of 8000000 for 9000
+ 6041 strings out of 479304
+ 87363 string characters out of 5861285
+ 638836 words of memory out of 5000000
+ 23113 multiletter control sequences out of 15000+600000
+ 414342 words of font info for 103 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 67i,6n,74p,460b,198s stack positions out of 5000i,500n,10000p,200000b,80000s
-<c:/Program Files (x86)/texlive/2020/texmf-dist/fonts
-/type1/public/amsfonts/cm/cmbx12.pfb><c:/Program Files (x86)/texlive/2020/texmf
--dist/fonts/type1/public/amsfonts/cm/cmr12.pfb>
-Output written on rapport.pdf (2 pages, 28699 bytes).
+ 67i,9n,74p,225b,1665s stack positions out of 5000i,500n,10000p,200000b,80000s
+{c:/Program Files (x86)/texlive/2020/texmf-dist/fonts/enc/
+dvips/cm-super/cm-super-ts1.enc}<c:/Program Files (x86)/texlive/2020/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/Program Files (x86)/texlive/2020
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/Program Files (x86)/t
+exlive/2020/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/Program Fil
+es (x86)/texlive/2020/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/P
+rogram Files (x86)/texlive/2020/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12
+.pfb><c:/Program Files (x86)/texlive/2020/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmr8.pfb><c:/Program Files (x86)/texlive/2020/texmf-dist/fonts/type1/publi
+c/amsfonts/cm/cmsy10.pfb><c:/Program Files (x86)/texlive/2020/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmtt10.pfb><c:/Program Files (x86)/texlive/2020/texmf-
+dist/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on rapport.pdf (6 pages, 112694 bytes).
 PDF statistics:
- 19 PDF objects out of 1000 (max. 8388607)
- 12 compressed objects within 1 object stream
+ 60 PDF objects out of 1000 (max. 8388607)
+ 42 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 25601 words of extra memory for PDF output out of 29859 (max. 10000000)
 

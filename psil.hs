@@ -224,7 +224,8 @@ s2l :: Sexp -> Lexp
 s2l (Snum n) = Lnum n
 s2l (Ssym s) = Lvar s
 s2l (se@(Scons _ _)) =
-    let selist = sexp2list se
+    let
+        selist = sexp2list se
     in
         case selist of
             (Ssym "hastype" : e : t : []) -> Lhastype (s2l e) (s2t t)
@@ -386,8 +387,9 @@ eval2 senv (Lfun a e) =
 
 eval2 senv (Llet ds b) = \venv ->
     let
-        senv' = (fst(unzip ds)) ++ senv
-        venv' = (map evlt (snd(unzip ds))) ++ venv
+        (vars, exps) = unzip ds
+        senv' = vars ++ senv
+        venv' = (map evlt exps) ++ venv
         evlt = \v -> ((eval2 senv' v) venv')
     in
         ((eval2 senv' b) venv')
