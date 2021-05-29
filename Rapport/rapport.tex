@@ -1,4 +1,4 @@
-\documentclass[11pt, titlepage]{article}
+\documentclass[10pt, titlepage]{article}
 \usepackage{fullpage}
 \usepackage{amsmath, amssymb}
 \usepackage{microtype}
@@ -281,6 +281,34 @@ eval2 senv (Llet ds b) = \venv ->
         ((eval2 senv' b) venv')
 \end{lstlisting}
 
-Suite à ces corrections, tous les tests du fichier ont passé.
+Suite à ces corrections, tous les tests du fichier ont passé. \\
+
+Cependant, nous nous étions pas encore penchés sur les détails de la syntaxe du
+langage, surtout dans le cas d'expressions contenant des erreurs. Par exemple,
+notre définition initiale de la conversion d'un type \texttt{Sexp} en un
+\texttt{Ltype} était trop vague et laisser donc passer des syntaxes incorrects:
+\begin{lstlisting}
+-- Version 1 - Definition trop vague
+s2t' :: Sexp -> [Sexp] -> Ltype
+s2t' se selist =
+    case selist of
+        (ta : Ssym "->" : tr : []) -> Larw (s2t ta) (s2t tr)
+        (ta : Ssym "->" : tr) -> Larw (s2t ta) (s2t' se tr) -- Erreur ici
+        _ | (last (init selist)) == Ssym "->" ->
+              Larw (s2t (head selist)) (s2t' se (tail selist))
+          | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+-- Version 2 - Definition rigoureuse
+s2t' :: Sexp -> [Sexp] -> Ltype
+s2t' se selist =
+    case selist of
+        (ta : Ssym "->" : tr : []) -> Larw (s2t ta) (s2t tr)
+        _ | (last (init selist)) == Ssym "->" ->
+              Larw (s2t (head selist)) (s2t' se (tail selist))
+          | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+\end{lstlisting}
+où l'on remarque ici que la seconde ligne dans le corps du \texttt{case} peut
+laisser passer des syntaxes incorrectes. Par après, la révision de
+l'implantation des divers \texttt{Sexp} et comment elles sont convertis a été
+revisités et plusieurs cas similaires ont été corrigés
 
 \end{document}
