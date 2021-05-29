@@ -31,7 +31,7 @@
 \begin{document}
 
 \title{{\Huge \textbf{TP1 - Rapport}}}
-\author{Philippe Gabriel \\ Dana Seif-Eddine}
+\author{Philippe Gabriel \\ Dana Seif Eddine}
 \date{30 mai 2021}
 
 \onehalfspacing
@@ -46,8 +46,8 @@
 \section{Syntaxe de Psil}
 
 La syntaxe de ce langage fonctionnel était assez simple à saisir, surtout
-après avoir regardé les simples exemples dans le fichier \texttt{sample.psil}.
-Pour la plupart des règles syntaxiques, nous avions presqu'immédiatement pu
+après avoir regardé les exemples simples dans le fichier \texttt{sample.psil}.
+Pour la plupart des règles syntaxiques, nous avions presque immédiatement pu
 associer une sémantique à chacune de celles-ci. La syntaxe étant préfixe a
 grandement simplifié l'analyse d'expressions et leur conversion.
 
@@ -84,7 +84,7 @@ Cette implémentation fonctionnait comme souhaité, mais une approche similaire
 ne fut pas possible pour \texttt{fun}. De plus, nous avons réalisé que le temps
 de calcul pour gérer le cas d'un appel de fonction est loin d'être optimal en
 raison du fait que l'on repasse une portion de notre \texttt{Sexp} à
-\texttt{s2l} pour la reconvertir avec \texttt{sexp2list} en une liste ce qui
+\texttt{s2l} pour la reconvertir avec \texttt{sexp2list} en une liste, ce qui
 est du travail inutile puisque l'on possède de la représentation en liste
 désirée. Il fut donc nécessaire de légèrement remodifier la définition de la
 fonction principale \texttt{s2l} comme suit:
@@ -103,7 +103,7 @@ appel à la fonction \texttt{s2l'}, une fonction auxiliaire capable de traiter
 les cas récursifs que l'on retrouve dans \texttt{call} et \texttt{fun}. \\
 Finalement, pour l'expression \texttt{let}, il a été important de penser aux
 différentes syntaxes de déclarations qu'offrent le langage \texttt{Psil}. Il a
-été donc nécessaire de définir une fonction \texttt{s2d} qui traite les
+donc été nécessaire de définir une fonction \texttt{s2d} qui traite les
 différents cas possibles. \\
 
 En ce qui concerne les types, les cas de \texttt{Bool} et \texttt{Tuple} furent
@@ -129,7 +129,7 @@ entre déclarations mais ne savions pas tout à fait pourquoi et comment, à ce
 stade, modifier notre définition qui ne faisait que directement traduire une
 déclaration en ses \texttt{Lexp} et \texttt{Ltype} correspondants. \\
 Lors de l'exécution de tests, il y eut des problèmes dans la vérification et
-l'évaluation de certaines expressions. Nous nous sommes souvenues de notre note
+l'évaluation de certaines expressions. Nous nous sommes souvenus de notre note
 initiale, et avions par après modifier les traductions de déclarations de sorte
 à les convertir à la forme suivante:
 \begin{equation*}
@@ -171,19 +171,19 @@ confirmer que notre implantation s'est bien faite.
 
 Les règles d'évaluation étaient assez intuitives et les \(\beta\)-réductions
 appliquées étaient prises en notes lors de cette phase. La seule règle qui ne
-figurait pas dans les instructions étaient celle propre aux fonctions (pas
+figurait pas dans les instructions était celle propre aux fonctions (pas
 l'appel de fonction). Après le survol du code, nous nous sommes basés sur la
-forme des fonctions prédéfinies du langages pour déterminer la forme attendue
-de l'évaluation d'une fonction. On note également une correspondance directe
+forme des fonctions prédéfinies du langage pour déterminer la forme attendue
+de l'évaluation d'une fonction. On note également une correspondance
 directe des constructeurs de types de \texttt{Value} avec ceux de
 \texttt{Ltype} ce qui nous a indiqué précisément le type de résultat de
-l'évaluation des divers expressions.
+l'évaluation des diverses expressions.
 
 \subsection{Implantation - Évaluateur}
 
-À la lumière des remarques et note ci-dessus, l'évaluation des expressions
+À la lumière des remarques et notes ci-dessus, l'évaluation des expressions
 \texttt{call}, \texttt{let}, \texttt{if}, \texttt{tuple} et \texttt{fetch}
-furent assez directs et simples. Le cas qui a prouvé être difficile est celui
+furent assez directes et simples. Le cas qui a prouvé être difficile est celui
 de \texttt{fun} pour lequel il n'était pas clair à vue d'oeil directement
 comment décrire son évaluation. Comme première idée, nous avions remarqué que
 le type semble être nécessaire pour l'évaluation d'une fonction, et donc avions
@@ -197,9 +197,9 @@ eval2 senv (Lhastype e t) =
 \end{lstlisting}
 
 Cette idée semblait être la seule solution possible à ce temps, mais on était
-pas arrivé à déterminer une forme générale pour toutes fonctions. C'est alors
+pas arrivé à déterminer une forme générale pour toutes les fonctions. C'est alors
 que nous avions pensé à une alternative, sans avoir besoin du type de la
-fonction, où la valeur de celle-ci sera déterminer au moment après qu'elle soit
+fonction, où la valeur de celle-ci sera déterminée au moment après qu'elle soit
 définie. Et donc, le code modifié précédemment a été remis tel qu'il était
 et notre idée alternative sur l'évaluation d'une fonction est comme suit:
 
@@ -228,7 +228,7 @@ survenait en raison du fait que nous n'avions pas tout à fait bien implémenté
 l'équivalence syntaxique de typage, décrite dans la section du sucre
 syntaxique. \\
 
-Dans les deus cas, il y avait un problème se posant dans la vérification de
+Dans les deux cas, il y avait un problème se posant dans la vérification de
 types de déclarations faisant référence à précédentes ou successives
 déclarations. Cela a été corrigé après 2 itérations en modifiant légèrement
 l'ordre d'instructions et la façon dont on entreprenait la mise-à-jour de
