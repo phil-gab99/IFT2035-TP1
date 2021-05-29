@@ -72,6 +72,7 @@ Pour l'expression \texttt{call}, afin de satisfaire son caractère curried, une
 première solution était de repasser en argument à \texttt{s2l} le premier
 argument du constructeur \texttt{Scons}. Pour cela, nous avions modifié le code
 comme-ci:
+
 \begin{lstlisting}
 s2l (se@(Scons se1 _)) = -- Modification ici
     case sexp2list se
@@ -132,6 +133,7 @@ Lors de l'exécution de tests, il y eut des problèmes dans la vérification et
 l'évaluation de certaines expressions. Nous nous sommes souvenus de notre note
 initiale, et avions par après modifier les traductions de déclarations de sorte
 à les convertir à la forme suivante:
+
 \begin{equation*}
     \begin{aligned}
         & (x \ (x_1 \ \tau_1) \ ... \ (x_n \ \tau_n) \ \tau \ e) && \implies \\
@@ -140,7 +142,9 @@ initiale, et avions par après modifier les traductions de déclarations de sort
         & (x \ \tau \ e) && \implies (x \ (\text{hastype} \ e \ \tau))
     \end{aligned}
 \end{equation*}
+
 Ce que les implications ci-dessus décrivent:
+
 \begin{itemize}
     \item C'est que la déclaration d'une fonction peut être réécrite en
     spécifiant le type sous une forme currifiée et le corps comme étant une
@@ -149,6 +153,7 @@ Ce que les implications ci-dessus décrivent:
     avec son type;
     \item Qui peut être réécrite l'aide de l'expression \texttt{hastype}.
 \end{itemize}
+
 Cette dernière réécriture est celle qui est préférée pour la vérification de
 types qui suit et donc \texttt{s2t} ainsi que \texttt{s2t'} ont été redéfinies
 afin de réécrire la \texttt{Sexp} en \texttt{Lexp} sous la forme désirée.
@@ -173,21 +178,21 @@ Les règles d'évaluation étaient assez intuitives et les \(\beta\)-réductions
 appliquées étaient prises en notes lors de cette phase. La seule règle qui ne
 figurait pas dans les instructions était celle propre aux fonctions (pas
 l'appel de fonction). Après le survol du code, nous nous sommes basés sur la
-forme des fonctions prédéfinies du langage pour déterminer la forme attendue
-de l'évaluation d'une fonction. On note également une correspondance
-directe des constructeurs de types de \texttt{Value} avec ceux de
-\texttt{Ltype} ce qui nous a indiqué précisément le type de résultat de
-l'évaluation des diverses expressions.
+forme des fonctions prédéfinies du langage pour déterminer la forme attendue de
+l'évaluation d'une fonction. On note également une correspondance directe des
+constructeurs de types de \texttt{Value} avec ceux de \texttt{Ltype} ce qui
+nous a indiqué précisément le type de résultat de l'évaluation des diverses
+expressions.
 
 \subsection{Implantation - Évaluateur}
 
 À la lumière des remarques et notes ci-dessus, l'évaluation des expressions
 \texttt{call}, \texttt{let}, \texttt{if}, \texttt{tuple} et \texttt{fetch}
-furent assez directes et simples. Le cas qui a prouvé être difficile est celui
-de \texttt{fun} pour lequel il n'était pas clair à vue d'oeil directement
-comment décrire son évaluation. Comme première idée, nous avions remarqué que
-le type semble être nécessaire pour l'évaluation d'une fonction, et donc avions
-modifié le code comme suit:
+fut assez directe et simple. Le cas qui a prouvé être difficile est celui de
+\texttt{fun} pour lequel il n'était pas clair à vue d'oeil comment décrire son
+évaluation. Comme première idée, nous avions remarqué que le type semble être
+nécessaire pour l'évaluation d'une fonction, et donc avions modifié le code
+comme suit:
 
 \begin{lstlisting}
 eval2 senv (Lhastype e t) =
@@ -197,11 +202,12 @@ eval2 senv (Lhastype e t) =
 \end{lstlisting}
 
 Cette idée semblait être la seule solution possible à ce temps, mais on était
-pas arrivé à déterminer une forme générale pour toutes les fonctions. C'est alors
-que nous avions pensé à une alternative, sans avoir besoin du type de la
-fonction, où la valeur de celle-ci sera déterminée au moment après qu'elle soit
-définie. Et donc, le code modifié précédemment a été remis tel qu'il était
-et notre idée alternative sur l'évaluation d'une fonction est comme suit:
+pas arrivé à déterminer une forme générale pour les diverses formes de
+fonctions. C'est alors que nous avions pensé à une alternative, sans avoir
+besoin du type de la fonction, où la valeur de celle-ci sera déterminée au
+moment après qu'elle soit définie. Et donc, le code modifié précédemment a été
+remis tel qu'il était et notre idée alternative sur l'évaluation d'une fonction
+est comme suit:
 
 \begin{lstlisting}
 eval2 senv (Lfun a e) =
@@ -214,6 +220,7 @@ L'étape qui suit à ce point est de tester notre implémentation sur des
 exemples. Nous avions employé pour commencer les tests qui figurent dans le
 fichier \texttt{sample.psil}. On voyait que tous les tests passaient sauf deux
 en particulier:
+
 \begin{itemize}
     \item La vérification de types de l'expression contenant une déclaration de
     fonction faisant référence à deux déclarations qui la précédait (l'avant-
@@ -287,6 +294,7 @@ Cependant, nous nous étions pas encore penchés sur les détails de la syntaxe 
 langage, surtout dans le cas d'expressions contenant des erreurs. Par exemple,
 notre définition initiale de la conversion d'un type \texttt{Sexp} en un
 \texttt{Ltype} était trop vague et laisser donc passer des syntaxes incorrects:
+
 \begin{lstlisting}
 -- Version 1 - Definition trop vague
 s2t' :: Sexp -> [Sexp] -> Ltype
@@ -306,6 +314,7 @@ s2t' se selist =
               Larw (s2t (head selist)) (s2t' se (tail selist))
           | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
 \end{lstlisting}
+
 où l'on remarque ici que la seconde ligne dans le corps du \texttt{case} peut
 laisser passer des syntaxes incorrectes. Par après, la révision de
 l'implantation des divers \texttt{Sexp} et comment elles sont convertis a été
