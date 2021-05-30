@@ -1,0 +1,10 @@
+;;; Fichier des tests.              -*- mode: lisp-data; coding: utf-8 -*-
+
+; Test 1
+(let (call = 0 0)) ; Expression let sans de déclarations
+
+; Test 2 NOT WORKING
+; (let (fact (n Int) Int (if (call = n 0) 1 (call (call * n) (call fact (call - n 1))))) (call fact 5))
+
+; Test 3 NOT WORKING
+; (hastype (let (even (x Int) Bool (if (call = x 0) (call = 0 0) (call odd (call - x 1)))) (odd (x Int) Bool (if (call = x 0) (call = 1 0) (call even (call - x 1)))) (call odd 8)) Bool)
