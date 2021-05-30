@@ -1,20 +1,31 @@
 ;;; Fichier des tests.              -*- mode: lisp-data; coding: utf-8 -*-
 
-; Test 1 - Expression let sans déclarations - Résultat attendu: 5 | Lint
+; Test 1 - Expression let sans déclarations
+; Résultat: 5 | Lint
 (let 5)
 
-; Test 2 - Valeur d'une fonction - Résultat attendu: <fun> : Larw Lint (Larw Lboo (Larw Lint (Ltup [Lint,Lint])))
+; Test 2 - Valeur d'une fonction
+; Résultat: <fun> | Larw Lint (Larw Lboo (Larw Lint (Ltup [Lint,Lint])))
 (let
     (f
         (Int -> (Bool -> (Int -> (Tuple Int Int))))
-        (fun x y z (if y (tuple (call * x z) (call + x z)) (tuple (call (call / x) z) (call (call - x) z)))))
+        (fun x y z (if y
+            (tuple (call * x z) (call + x z))
+            (tuple (call (call / x) z) (call (call - x) z)))))
       f)
 
-; Test 3 - Tuples et fonctions - Résultat attendu: [84 0 False] | Ltup [Lint,Lint,Lboo]
+; Test 3 - Tuples et fonctions
+; Résultat: [84 0 False] | Ltup [Lint,Lint,Lboo]
 (hastype
     (fetch
         (tuple
-            (hastype (fun x y (let (n1 Int (call + x y)) (n2 (call - x y)) (n3 (call <= n1 n2)) (tuple n1 n2 n3))) (Int Int -> (Tuple Int Int Bool)))
+            (hastype (fun x y
+                (let
+                    (n1 Int (call + x y))
+                    (n2 (call - x y))
+                    (n3 (call <= n1 n2))
+                    (tuple n1 n2 n3)))
+                (Int Int -> (Tuple Int Int Bool)))
             /
             40
             1680
@@ -23,17 +34,22 @@
         (call f (call d y x) (call d z (call d y x))))
     (Tuple Int Int Bool))
 
-; Test 4 - Portée - Résultat attendu: 56 | Lint 
+; Test 4 - Portée
+; Résultat: 56 | Lint 
 (let (x 5) (f (y Int) Int (call + x y)) (let (x 7) (call * (call f 3) x)))
 
-; Test 5 - Déclarations avec références avant et après - Résultat attendu: False | Lboo
+; Test 5 - Déclarations avec références avant et après
+; Résultat: False | Lboo
 (let (x 5)
      (y Int 10)
      (not (x Bool) Bool (if x false true))
      (true (call = 0 0))
      (false (call = 0 1))
-     (and (x Bool) (y Bool) Bool (hastype (if x (hastype (if y true false) Bool) false) Bool))
-    (hastype (if (call and (call <= (hastype (fetch (tuple x y) (x y) (call * x y)) Int) 42)
-                         (call not (call (call = x) y)))
+     (and (x Bool) (y Bool) Bool
+        (hastype (if x (hastype (if y true false) Bool) false) Bool))
+    (hastype (if
+        (call and
+            (call <= (hastype (fetch (tuple x y) (x y) (call * x y)) Int) 42)
+            (call not (call (call = x) y)))
                true false)
            Bool))

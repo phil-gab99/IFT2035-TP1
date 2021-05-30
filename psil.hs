@@ -59,7 +59,8 @@ pComment = do { pChar ';'; _ <- many (satisfy (\c -> not (c == '\n')));
 -- N'importe quelle combinaison d'espaces et de commentaires est considérée
 -- comme du blanc.
 pSpaces :: Parser ()
-pSpaces = do { _ <- many (do { _ <- space ; return () } <|> pComment); return () }
+pSpaces =
+    do { _ <- many (do { _ <- space ; return () } <|> pComment); return () }
 
 -- Un nombre entier est composé de chiffres.
 integer     :: Parser Int
@@ -188,23 +189,23 @@ showSexp e = showSexp' e ""
 
 type Var = String
 
-data Ltype = Lint               -- Int
-           | Lboo               -- Bool
-           | Larw Ltype Ltype   -- τ₁ → τ₂
-           | Ltup [Ltype]       -- tuple τ₁...τₙ
+data Ltype = Lint                   -- Int
+           | Lboo                   -- Bool
+           | Larw Ltype Ltype       -- τ₁ → τ₂
+           | Ltup [Ltype]           -- tuple τ₁...τₙ
            deriving (Show, Eq)
 
-data Lexp = Lnum Int                    -- Constante entière.
-          | Lvar Var                    -- Référence à une variable.
-          | Lhastype Lexp Ltype         -- Annotation de type.
-          | Lcall Lexp Lexp             -- Appel de fonction, avec un argument.
-          | Lfun Var Lexp               -- Fonction anonyme prenant un argument.
+data Lexp = Lnum Int                -- Constante entière.
+          | Lvar Var                -- Référence à une variable.
+          | Lhastype Lexp Ltype     -- Annotation de type.
+          | Lcall Lexp Lexp         -- Appel de fonction, avec un argument.
+          | Lfun Var Lexp           -- Fonction anonyme prenant un argument.
           -- Déclaration d'une liste de variables qui peuvent être
           -- mutuellement récursives.
           | Llet [(Var, Lexp)] Lexp
-          | Lif Lexp Lexp Lexp          -- Expression conditionelle.
-          | Ltuple [Lexp]               -- Construction de tuple
-          | Lfetch Lexp [Var] Lexp      -- lecture d'un tuple
+          | Lif Lexp Lexp Lexp      -- Expression conditionelle.
+          | Ltuple [Lexp]           -- Construction de tuple
+          | Lfetch Lexp [Var] Lexp  -- lecture d'un tuple
           deriving (Show, Eq)
 
 ---------------------------------------------------------------------------
@@ -264,7 +265,7 @@ s2l (se@(Scons _ _)) =
 s2l se = error (unrecExp se)
 
 -- Fonction auxiliaire de s2l traitant les cas avec récursion (currying)
--- Fonction accomodant au sucre syntaxique d'appels et déclarations de fonction
+-- Fonction accomodant au sucre syntaxique de fonctions et d'appels de fonction
 s2l' :: Sexp -> [Sexp] -> Lexp
 s2l' se selist =
     case selist of
@@ -290,7 +291,7 @@ s2t (se@(Scons _ _)) =
     let
         selist = sexp2list se
     in
-        case selist of -- Modify according to answer
+        case selist of
             (Ssym "Tuple" : ts) -> Ltup (map s2t ts)
             _ | length selist < 2 -> error (unrecType se)
               | (last (init selist)) == Ssym "->" -> s2t' se selist
@@ -330,9 +331,11 @@ s2d se (d : ds) =
         else 
             case selist of
                 (Ssym x : e : []) -> (x, s2l e) : s2d se ds
-                (Ssym x : t : e : []) -> (x, Lhastype (s2l e) (s2t t)) : s2d se ds
+                (Ssym x : t : e : []) -> (x, Lhastype (s2l e) (s2t t))
+                    : s2d se ds
                 (Ssym x : es) -> (x, Lhastype
-                    (s2l' se ([Ssym "fun"] ++ getArgs (init(init es)) ++ [(last es)]))
+                    (s2l' se ([Ssym "fun"] ++ getArgs (init(init es))
+                        ++ [(last es)]))
                     (s2t' se (getTypes (init es)))) : (s2d se ds)
                 _ -> error ("Unrecognized Psil declaration: " ++ (showSexp se))
 
