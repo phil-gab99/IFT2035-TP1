@@ -441,6 +441,8 @@ valType Vbool _ = Lboo
 valType Vtuple ts = Ltup (map valType ts)
 valType Vfun _ (\a -> b) = Larw (valType a) (valType b)
 \end{lstlisting}
+Ceci dit, l'évaluation de telles expressions se fait correctement si elles sont
+bien définies.
 
 \section{Notes sur la modification du code}
 
