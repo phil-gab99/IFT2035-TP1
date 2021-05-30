@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020/W32TeX) (preloaded format=pdflatex 2021.1.31)  29 MAY 2021 18:34
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020/W32TeX) (preloaded format=pdflatex 2021.1.31)  29 MAY 2021 21:45
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -251,42 +251,42 @@ Underfull \hbox (badness 10000) in paragraph at lines 56--66
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 100--108
+Underfull \hbox (badness 10000) in paragraph at lines 101--109
 
  []
 
 [2]
-Underfull \hbox (badness 10000) in paragraph at lines 118--121
+Underfull \hbox (badness 10000) in paragraph at lines 119--122
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 122--124
+Underfull \hbox (badness 10000) in paragraph at lines 123--125
 
  []
 
 [3] [4]
-Underfull \hbox (badness 10000) in paragraph at lines 226--230
+Underfull \hbox (badness 10000) in paragraph at lines 233--237
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 258--262
+Underfull \hbox (badness 10000) in paragraph at lines 265--269
 
  []
 
 [5]
-Underfull \hbox (badness 10000) in paragraph at lines 284--285
+Underfull \hbox (badness 10000) in paragraph at lines 291--292
 
  []
 
 [6] (./rapport.aux) ) 
 Here is how much of TeX's memory you used:
- 6082 strings out of 479304
- 87785 string characters out of 5861285
+ 6080 strings out of 479304
+ 87769 string characters out of 5861285
  686755 words of memory out of 5000000
  23134 multiletter control sequences out of 15000+600000
- 415179 words of font info for 114 fonts, out of 8000000 for 9000
+ 415128 words of font info for 113 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  67i,9n,74p,225b,1659s stack positions out of 5000i,500n,10000p,200000b,80000s
 {c:/Program Files (x86)/texlive/2020/texmf-dist/fonts/enc/
@@ -302,7 +302,7 @@ c/amsfonts/cm/cmsy10.pfb><c:/Program Files (x86)/texlive/2020/texmf-dist/fonts/
 type1/public/amsfonts/cm/cmtt10.pfb><c:/Program Files (x86)/texlive/2020/texmf-
 dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb><c:/Program Files (x86)/texlive/2
 020/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on rapport.pdf (6 pages, 122287 bytes).
+Output written on rapport.pdf (6 pages, 122109 bytes).
 PDF statistics:
  64 PDF objects out of 1000 (max. 8388607)
  45 compressed objects within 1 object stream
