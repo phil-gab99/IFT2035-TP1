@@ -254,7 +254,7 @@ s2l (se@(Scons _ _)) =
                 then error (argsNumError se)
                 else Llet (s2d se (init es)) (s2l (last es))
             (Ssym "if" : e1 : e2 : e3 : []) -> Lif (s2l e1) (s2l e2) (s2l e3)
-            (Ssym "tuple" : es) -> Ltuple (map s2l es) -- change if necessary
+            (Ssym "tuple" : es) -> Ltuple (map s2l es)
             (Ssym "fetch" : tpl : xs : e : []) -> Lfetch (s2l tpl)
                 (map (\x -> case s2l x of
                     Lvar s -> s
@@ -321,8 +321,8 @@ s2d se (d : ds) =
         getArgs [] = []
         getArgs (a : as) = (head (sexp2list a)) : getArgs as 
         getTypes [] = error "Type not specified"
-        getTypes (t : []) = t : []
-        getTypes (t : ts) = (last (sexp2list t)) : Ssym "->" : getTypes ts
+        getTypes (t : []) = Ssym "->" : t : []
+        getTypes (t : ts) = (last (sexp2list t)) : getTypes ts
         selist = sexp2list d
     in
         if length selist < 2
