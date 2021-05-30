@@ -1,5 +1,7 @@
 ;;; Fichier des tests.              -*- mode: lisp-data; coding: utf-8 -*-
 
+; Philippe Gabriel - Dana Seif Eddine
+
 ; Test 1 - Expression let sans déclarations
 ; Résultat: 5 | Lint
 (let 5)

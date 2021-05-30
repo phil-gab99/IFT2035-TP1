@@ -1,8 +1,9 @@
-\documentclass[11pt, titlepage]{article}
-% \usepackage{fullpage}
+\documentclass[10pt, titlepage]{article}
+
 \usepackage[margin=0.5in]{geometry}
 \usepackage{amsmath, amssymb}
 \usepackage{microtype}
+\usepackage{titlesec}
 
 % Code snippets
 \usepackage{listings}
@@ -26,6 +27,8 @@
     breakatwhitespace=true,
     tabsize=4
 }
+
+\titlespacing{\section}{0pt}{*1.5}{*1.5}
 
 \begin{document}
 
@@ -257,10 +260,10 @@ infer tenv (Llet ds b) =
     in
         infer (zip tenvn' tenvt') b
 \end{lstlisting}
-Les cas d'erreurs qui sont survenues s'apparente au \texttt{let} et
-\texttt{let*} du langage \texttt{Lisp}. Avec la dernière itération, l'idée d'un
-\texttt{letrec} a été implémentée. On remarque, si l'on suit les instructions
-de près, comment la procédure diffère d'une itération à l'autre. \\
+On remarque, si l'on suit les instructions de près, comment la procédure
+diffère d'une itération à l'autre. La dernière itération a permis aux
+déclarations de faire référence à d'autre déclarations qui la suivent ou qui la
+précèdent.\\
 
 Dans le second cas, un problème d'évaluation survenait dans le cas où une
 déclaration faisait référence à une déclaration successive. La solution suit de
@@ -296,22 +299,18 @@ s2t' se selist =
     case selist of
         (ta : Ssym "->" : tr : []) -> Larw (s2t ta) (s2t tr)
         (ta : Ssym "->" : tr) -> Larw (s2t ta) (s2t' se tr) -- Erreur ici
-        _ | (last (init selist)) == Ssym "->" ->
-              Larw (s2t (head selist)) (s2t' se (tail selist))
-          | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+        ...
 
 -- Version 2 - Definition rigoureuse
 s2t' :: Sexp -> [Sexp] -> Ltype
 s2t' se selist =
     case selist of
         (ta : Ssym "->" : tr : []) -> Larw (s2t ta) (s2t tr)
-        _ | (last (init selist)) == Ssym "->" ->
-              Larw (s2t (head selist)) (s2t' se (tail selist))
-          | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+        ...
 \end{lstlisting}
 où l'on remarque ici que la seconde ligne dans le corps du \texttt{case} peut
 laisser passer des syntaxes incorrectes. Par après, la révision de
-l'implantation des divers \texttt{Sexp} et comment elles sont convertis a été
+l'implantation des divers \texttt{Sexp} et comment elles sont converties a été
 revisités et plusieurs cas similaires ont été corrigés
 
 \section{Détails sur différents choix d'implémentation}
@@ -357,7 +356,6 @@ d'une construction particulière de tuples:
 \begin{lstlisting}[language=bash]
 ghci> :t ()
 () :: ()
-ghci>
 \end{lstlisting}
 Le tuple vide est une construction valide du langage. Et comme dans le cas
 précédent, on remarque que \texttt{Ltuple} prend une liste de \texttt{Lexp} en
@@ -368,7 +366,81 @@ Nous avions donc décider d'adopter cette mesure également. Cette donnée sembl
 même pas possible de la manipuler avec l'expression \texttt{fetch} puisqu'il
 n'y a rien à assigner. La seule utilité est vraiment peut-être de l'assigner à
 une autre variable ou la retourner comme résultat. Si l'on pensait à étendre
-le langage Psil, peut-être qu'elle s'avèrerait plus utile.
+le langage Psil, peut-être qu'elle s'avèrerait plus utile. \\
+
+La plus grande difficulté de ce projet était d'implémenter l'inférence de types
+de fonctions récursives. On se rend compte que, à partir de nos jugements sur
+les règles de typage, qu'une limite se présente dans la règle suivante:
+
+\begin{equation*}
+    \frac{\Gamma' = \Gamma, x_1 : \tau_1, ..., x_n : \tau_n \qquad \Gamma'
+    \vdash e \Rightarrow \tau \qquad \forall i. \ \Gamma' \vdash e_i
+    \Rightarrow \tau_i}{\Gamma \vdash (\text{let} \ (x_1 \ e_1) \ ... \
+    (x_n \ e_n) \ e) \Rightarrow \tau}
+\end{equation*}
+Cette règle explique qu'afin d'inférer le type d'une expression \texttt{let},
+il faut en premier lieu étendre le contexte \(\Gamma\) pour qu'il contienne le
+type inféré des différentes déclarations (pouvant être mutuellement récursives)
+pour ensuite inféré le type du corps de l'expression qui correspond à celui de
+l'expression \texttt{let}. En ce qui concerne la récursivité mutuelle, voici
+certains cas à prendre en compte:
+\begin{itemize}
+    \item Déclaration faisant référence à une autre qui la suit ou la précède;
+    \item Déclaration faisant référence directement à elle-même;
+    \item Déclaration faisant référence à une autre déclaration qui, à son
+    tour, y fait référence.
+\end{itemize}
+Le premier cas a été géré dans la section sur les tests. Les deux autres
+décrivent dans l'un, une récursion directe pour une déclaration, et dans
+l'autre, une récursion indirecte d'une expression sur elle-même. Lorsque la
+définition d'une déclaration la ramène à se référer elle-même, notre règle de
+typage ci-haut ne permet pas d'inférer en un temps fini le type de l'expression
+de la déclaration. Quelques exemple de telles déclarations:
+\begin{lstlisting}[language=elisp]
+; Calcul de la factoriel - Recursion direct
+(let
+    (fact (n Int) Bool (if (call = n 0) 1
+            (call (call * n) (call fact (call - n 1)))))
+    (call fact 5))
+    
+; Exemple du pdf - Recursion indirecte
+(let (even (x Int) Bool (if (call = x 0) true (call odd (call - x 1))))
+     (odd (x Int) Bool (if (call = x 0) false (call even (call - x 1))))
+    (call odd 8))
+\end{lstlisting}
+On arrive à un cas de règle indécidable puisque l'inférence de telles
+expressions nous ramène par la suite à inférer la même expression qui y est
+présente et cette boucle continue sans fin. Une possible solution que nous
+avions tenté d'implémenté était de poser comme hypothèse le type fournit dans
+le code, et puis de vérifier par après si le type du résultat obtenu correspond
+au type fournit. On se rend compte qu'une telle solution n'est probablement pas
+souhaité puisque cela détruit en quelque sorte le flux des étapes à suivre.
+Nous n'avions donc pas sut comment procéder pour cette section, voici la
+version de notre code lors de notre tentative:
+
+\begin{lstlisting}
+infer tenv (Llet ds b) =
+    let
+        ...
+        tenvt' = (map (\e -> case e of
+                Lhastype _ t -> t
+                _ -> infer (zip tenvn' tenvt') e) exps) ++ tenvt
+...
+run filename =
+    ...
+                               let ...
+                                   ; resT = valType val }
+                               in 
+                                  if resT /= ltyp
+                                  then error ("Type mismatch: " ++ show resT ++ " != " ++ show ltyp)
+                                  else ...
+...
+valType :: Value -> Ltype
+valType Vnum _ = Lint
+valType Vbool _ = Lboo
+valType Vtuple ts = Ltup (map valType ts)
+valType Vfun _ (\a -> b) = Larw (valType a) (valType b)
+\end{lstlisting}
 
 \section{Notes sur la modification du code}
 
