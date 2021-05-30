@@ -1,9 +1,8 @@
-\documentclass[10pt, titlepage]{article}
-\usepackage{fullpage}
+\documentclass[11pt, titlepage]{article}
+% \usepackage{fullpage}
+\usepackage[margin=0.5in]{geometry}
 \usepackage{amsmath, amssymb}
 \usepackage{microtype}
-
-\usepackage{setspace}
 
 % Code snippets
 \usepackage{listings}
@@ -33,8 +32,6 @@
 \title{{\Huge \textbf{TP1 - Rapport}}}
 \author{Philippe Gabriel \\ Dana Seif Eddine}
 \date{30 mai 2021}
-
-\onehalfspacing
 
 \maketitle
 
@@ -98,6 +95,7 @@ s2l (se@(Scons _ _)) =
         (Ssym "call" : _) -> s2l' se selist
         (Ssym "fun" : _) -> s2l' se selist
 \end{lstlisting}
+
 où nous avions simplement dénoté l'expansion de la \texttt{Sexp} sous le nom de
 la variable \texttt{selist}. La raison du changement est pour ensuite faire
 appel à la fonction \texttt{s2l'}, une fonction auxiliaire capable de traiter
@@ -153,7 +151,6 @@ Ce que les implications ci-dessus décrivent:
     avec son type;
     \item Qui peut être réécrite l'aide de l'expression \texttt{hastype}.
 \end{itemize}
-
 Cette dernière réécriture est celle qui est préférée pour la vérification de
 types qui suit et donc \texttt{s2t} ainsi que \texttt{s2t'} ont été redéfinies
 afin de réécrire la \texttt{Sexp} en \texttt{Lexp} sous la forme désirée.
@@ -200,7 +197,6 @@ eval2 senv (Lhastype e t) =
     Larw _ _ -> eval2fun senv e t
     _ -> eval2 senv e
 \end{lstlisting}
-
 Cette idée semblait être la seule solution possible à ce temps, mais on était
 pas arrivé à déterminer une forme générale pour les diverses formes de
 fonctions. C'est alors que nous avions pensé à une alternative, sans avoir
@@ -261,7 +257,6 @@ infer tenv (Llet ds b) =
     in
         infer (zip tenvn' tenvt') b
 \end{lstlisting}
-
 Les cas d'erreurs qui sont survenues s'apparente au \texttt{let} et
 \texttt{let*} du langage \texttt{Lisp}. Avec la dernière itération, l'idée d'un
 \texttt{letrec} a été implémentée. On remarque, si l'on suit les instructions
@@ -287,7 +282,6 @@ eval2 senv (Llet ds b) = \venv ->
     in
         ((eval2 senv' b) venv')
 \end{lstlisting}
-
 Suite à ces corrections, tous les tests du fichier ont passé. \\
 
 Cependant, nous nous étions pas encore penchés sur les détails de la syntaxe du
@@ -315,10 +309,73 @@ s2t' se selist =
               Larw (s2t (head selist)) (s2t' se (tail selist))
           | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
 \end{lstlisting}
-
 où l'on remarque ici que la seconde ligne dans le corps du \texttt{case} peut
 laisser passer des syntaxes incorrectes. Par après, la révision de
 l'implantation des divers \texttt{Sexp} et comment elles sont convertis a été
 revisités et plusieurs cas similaires ont été corrigés
+
+\section{Détails sur différents choix d'implémentation}
+
+Suite à la précédente révision qui a mené à gérer différents cas de syntaxe,
+certains questionnements sur la syntaxe qui ne sont pas spécifiés dans la
+donnée du travail persistent. On tente ici d'expliquer certains de ces
+questionnements ainsi que nos décisions par rapport à ceux-ci. \\
+
+Un premier questionnement fut celui du parenthèsage d'expressions. Pour ce qui
+est des expressions ou types atomiques (un nombre, une variable, un type
+primitif, ...) on se questionnait sur la validité des jugements suivants:
+
+\begin{align}
+    \text{Int} & \stackrel{?}{\equiv} \text{(Int)} \tag{Type nombres entiers} \\
+    \text{Bool} & \stackrel{?}{\equiv} \text{(Bool)} \tag{Type booléens} \\
+    n & \stackrel{?}{\equiv} (n) \tag{Un entier} \\
+    x & \stackrel{?}{\equiv} (x) \tag{Une variable}
+\end{align}
+Après réflexion, il nous a semblé être plus approprié d'empêcher le
+parenthèsage de la sorte pour les expressions atomiques puisque les parenthèses
+dans notre langage sont significatives \(\implies\) elles indiquent
+l'application du constructeur de types \texttt{Scons} composés de deux 
+\texttt{Sexp}. Ces exemples abordés étant atomiques impliquent qu'il ne s'agit 
+que d'un  \texttt{Sexp} (\texttt{Ssym} ou \texttt{Snum} selon le cas). \\
+
+Un second questionnement est celui traitant sur l'expression \texttt{let} du
+langage. Le langage fonctionnel Haskell permet une syntaxe intéressante:
+\begin{lstlisting}
+let in body
+\end{lstlisting}
+On remarque qu'aucune déclaration n'a été faite, ce qui rend l'expression
+\texttt{let} inutile. Est-il pertinent que notre langage adopte un tel 
+comportement? Après avoir noté la structure du constructeur de types
+\texttt{Llet} pour une \texttt{Lexp}, on voit que les arguments s'agissent
+d'une liste de déclarations et du corps à exécuter. Rien n'empêche que la liste
+soit vide, car elle demeurera correctement typée. Cela nous a donc encouragé à
+également adopter cette approche. \\
+
+Un troisième questionnement aborde le cas de construction de tuples. Par un
+raisonnement similaire à précédemment, on remarque que Haskell permet l'usage
+d'une construction particulière de tuples:
+\begin{lstlisting}[language=bash]
+ghci> :t ()
+() :: ()
+ghci>
+\end{lstlisting}
+Le tuple vide est une construction valide du langage. Et comme dans le cas
+précédent, on remarque que \texttt{Ltuple} prend une liste de \texttt{Lexp} en
+paramètre, ce qui n'empêche pas celle-ci d'être vide. Et bien sûr, comme
+démontré ci-haut, le type d'un tuple vide est tout simplement \texttt{Ltup []}.
+Nous avions donc décider d'adopter cette mesure également. Cette donnée semble,
+à première vue, inutile pour notre langage. Cela en raison du fait qu'il n'est
+même pas possible de la manipuler avec l'expression \texttt{fetch} puisqu'il
+n'y a rien à assigner. La seule utilité est vraiment peut-être de l'assigner à
+une autre variable ou la retourner comme résultat. Si l'on pensait à étendre
+le langage Psil, peut-être qu'elle s'avèrerait plus utile.
+
+\section{Notes sur la modification du code}
+
+Il n'y a pas eu de grandes modification du code source déjà fournit. Les
+exceptions ont été expliquées dans les précédentes sections du document. Sinon,
+une autre légère modification amenée est simplement le remplacement de certains
+des messages d'erreurs sur la syntaxe d'expressions par des fonctions pour
+générer le message correspondant de sorte à alléger un peu la lecture du code.
 
 \end{document}

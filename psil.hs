@@ -211,6 +211,18 @@ data Lexp = Lnum Int                    -- Constante entière.
 -- Conversion de Sexp à Lexp                                             --
 ---------------------------------------------------------------------------
 
+argsNumError :: Sexp -> String
+argsNumError = \x -> "Insufficient arguments for expression " ++ showSexp x
+
+argsMatchError :: Sexp -> String
+argsMatchError = \x -> "Couldn't match expected arguments in: " ++ showSexp x
+
+unrecExp :: Sexp -> String
+unrecExp = \x -> "Unrecognized Psil expression: " ++ showSexp x
+
+unrecType :: Sexp -> String
+unrecType = \x -> "Unrecognized Psil type: " ++ showSexp x
+
 -- Convertit une liste Sexp en une liste Haskell avec les éléments d'intérêts
 sexp2list :: Sexp -> [Sexp]
 sexp2list s = loop s []
@@ -231,25 +243,25 @@ s2l (se@(Scons _ _)) =
             (Ssym "hastype" : e : t : []) -> Lhastype (s2l e) (s2t t)
             (Ssym "call" : es) ->
                 if length es < 2
-                then error ("Insufficient arguments for expression " ++ (showSexp se))
+                then error (argsNumError se)
                 else s2l' se selist
             (Ssym "fun" : es) ->
                 if length es < 2
-                then error ("Insufficient arguments for expression " ++ (showSexp se))
+                then error (argsNumError se)
                 else s2l' se selist
             (Ssym "let" : es) ->
-                if length es < 2
-                then error ("Insufficient arguments for expression " ++ (showSexp se))
+                if length es < 1
+                then error (argsNumError se)
                 else Llet (s2d se (init es)) (s2l (last es))
             (Ssym "if" : e1 : e2 : e3 : []) -> Lif (s2l e1) (s2l e2) (s2l e3)
             (Ssym "tuple" : es) -> Ltuple (map s2l es) -- change if necessary
             (Ssym "fetch" : tpl : xs : e : []) -> Lfetch (s2l tpl)
                 (map (\x -> case s2l x of
                     Lvar s -> s
-                    _ -> error ("Couldn't match expected arguments in: " ++ (showSexp se)))
+                    _ -> error (argsMatchError se))
                 (sexp2list xs)) (s2l e)
-            _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
-s2l se = error ("Unrecognized Psil expression: " ++ (showSexp se))
+            _ -> error (unrecExp se)
+s2l se = error (unrecExp se)
 
 -- Fonction auxiliaire de s2l traitant les cas avec récursion (currying)
 -- Fonction accomodant au sucre syntaxique d'appels et déclarations de fonction
@@ -262,12 +274,12 @@ s2l' se selist =
         (Ssym "fun" : v : e : []) ->
             case s2l v of
                 Lvar x -> Lfun x (s2l e)
-                _ -> error ("Couldn't match expected arguments in: " ++ (showSexp se))
+                _ -> error (argsMatchError se)
         (Ssym "fun" : v : vs) ->
             case s2l v of
                 Lvar x -> Lfun x (s2l' se ([Ssym "fun"] ++ vs))
-                _ -> error ("Couldn't match expected arguments in: " ++ (showSexp se))
-        _ -> error ("Unrecognized Psil expression: " ++ (showSexp se))
+                _ -> error (argsMatchError se)
+        _ -> error (unrecExp se)
 
 -- Analyse une Sexp et construit un Ltype équivalent
 -- Appelée lorsqu'une expression indique des types
@@ -280,10 +292,11 @@ s2t (se@(Scons _ _)) =
     in
         case selist of -- Modify according to answer
             (Ssym "Tuple" : ts) -> Ltup (map s2t ts)
-            _ | (last (init selist)) == Ssym "->" -> s2t' se selist
-              | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+            _ | length selist < 2 -> error (unrecType se)
+              | (last (init selist)) == Ssym "->" -> s2t' se selist
+              | otherwise -> error (unrecType se)
 
-s2t se = error ("Unrecognized Psil type: " ++ (showSexp se))
+s2t se = error (unrecType se)
 
 -- Fonction auxiliaire de s2t traitant les cas avec récursion (currying)
 -- Fonction accomodant au sucre syntaxique de types de fonctions
@@ -293,7 +306,7 @@ s2t' se selist =
         (ta : Ssym "->" : tr : []) -> Larw (s2t ta) (s2t tr)
         _ | (last (init selist)) == Ssym "->" ->
               Larw (s2t (head selist)) (s2t' se (tail selist))
-          | otherwise -> error ("Unrecognized Psil type: " ++ (showSexp se))
+          | otherwise -> error (unrecType se)
 
 -- Analyse une Sexp et construit une liste de tuple (Var, Lexp)
 -- Appelée lors de l'analyse de l'expression let où s'y trouve des déclarations
