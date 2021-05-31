@@ -425,7 +425,7 @@ eval2 senv (Llet ds b) = \venv ->
         (vars, exps) = unzip ds
         senv' = vars ++ senv
         venv' = (map eval2' exps) ++ venv
-        eval2' = \v -> ((eval2 senv' v) venv')
+        eval2' = \v -> (eval2 senv' v) venv'
     in
         eval2' b
 
