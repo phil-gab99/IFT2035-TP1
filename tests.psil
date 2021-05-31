@@ -67,11 +67,11 @@
 ; Résultat - [1 True] : *** Exception: Type mismatch: Ltup [Lint,Lboo] != Lint
 ; Mettre en commentaire pour ne pas interrompre
 
-;(let (exp (Tuple Int Bool) (if cond (tuple 1 true)
-;        (fetch (tuple + 15 12) (f x y) (call f x y))))
-;      (not (x Bool) Bool (if x false true))
-;      (false (call (call = 0) 1))
-;      (true (call = 0 0))
-;      (or (Bool Bool -> Bool) (fun x y (if x true (if y true false))))
-;      (cond (call or (call not true) (call not false)))
-;      exp)
+(let (exp (Tuple Int Bool) (if cond (tuple 1 true)
+        (fetch (tuple + 15 12) (f x y) (call f x y))))
+      (not (x Bool) Bool (if x false true))
+      (false (call (call = 0) 1))
+      (true (call = 0 0))
+      (or (Bool Bool -> Bool) (fun x y (if x true (if y true false))))
+      (cond (call or (call not true) (call not false)))
+      exp)
