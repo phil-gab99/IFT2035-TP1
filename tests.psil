@@ -16,31 +16,7 @@
             (tuple (call (call / x) z) (call (call - x) z)))))
       f)
 
-; Test 3 - Tuples et fonctions
-; Résultat - [84 0 False] : Ltup [Lint,Lint,Lboo]
-(hastype
-    (fetch
-        (tuple
-            (hastype (fun x y
-                (let
-                    (n1 Int (call + x y))
-                    (n2 (call - x y))
-                    (n3 (call <= n1 n2))
-                    (tuple n1 n2 n3)))
-                (Int Int -> (Tuple Int Int Bool)))
-            /
-            40
-            1680
-            1764)
-        (f d x y z)
-        (call f (call d y x) (call d z (call d y x))))
-    (Tuple Int Int Bool))
-
-; Test 4 - Portée
-; Résultat - 56 : Lint 
-(let (x 5) (f (y Int) Int (call + x y)) (let (x 7) (call * (call f 3) x)))
-
-; Test 5 - Déclarations avec références avant et après
+; Test 3 - Déclarations avec références avant et après
 ; Résultat - False : Lboo
 (let (x 5)
      (y Int 10)
@@ -56,16 +32,15 @@
                true false)
            Bool))
 
-; Test 6 - Tuples comme variables
+; Test 4 - Tuples comme variables
 ; Résultat - 42 : Lint
 
 (let (x (tuple double * 7))
     (double ((Int -> (Int -> Int)) -> (Int -> Int)) (fun op x (call op x x)))
   (call - (hastype (fetch x (double op num) (call double op num)) Int) 7))
 
-; Test 7 - Inférence de types, détection de mismatch
+; Test 5 - Inférence de types, détection de mismatch
 ; Résultat - [1 True] : *** Exception: Type mismatch: Ltup [Lint,Lboo] != Lint
-; Mettre en commentaire pour ne pas interrompre
 
 (let (exp (Tuple Int Bool) (if cond (tuple 1 true)
         (fetch (tuple + 15 12) (f x y) (call f x y))))
