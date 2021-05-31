@@ -296,7 +296,6 @@ s2t (se@(Scons _ _)) =
             _ | length selist < 2 -> error (unrecType se)
               | (last (init selist)) == Ssym "->" -> s2t' se selist
               | otherwise -> error (unrecType se)
-
 s2t se = error (unrecType se)
 
 -- Fonction auxiliaire de s2t traitant les cas avec récursion (currying)
@@ -412,9 +411,9 @@ eval2 senv (Lvar x) =
 
 eval2 senv (Lcall o a) = \venv ->
     let
-        Vfun _ f = evlt o
-        n = evlt a
-        evlt = \x -> (eval2 senv x) venv
+        Vfun _ f = eval2' o
+        n = eval2' a
+        eval2' = \x -> (eval2 senv x) venv
     in
         f n
 
@@ -425,24 +424,24 @@ eval2 senv (Llet ds b) = \venv ->
     let
         (vars, exps) = unzip ds
         senv' = vars ++ senv
-        venv' = (map evlt exps) ++ venv
-        evlt = \v -> ((eval2 senv' v) venv')
+        venv' = (map eval2' exps) ++ venv
+        eval2' = \v -> ((eval2 senv' v) venv')
     in
-        ((eval2 senv' b) venv')
+        eval2' b
 
 eval2 senv (Lif e1 e2 e3) = \venv ->
     let
-        evlt = \x -> (eval2 senv x) venv
+        eval2' = \x -> (eval2 senv x) venv
     in
-        case evlt e1 of
-            Vbool True -> evlt e2
-            _ -> evlt e3
+        case eval2' e1 of
+            Vbool True -> eval2' e2
+            _ -> eval2' e3
 
 eval2 senv (Ltuple e) = \venv ->
     let
-        evlt = \v -> (eval2 senv v) venv
+        eval2' = \v -> (eval2 senv v) venv
     in
-        Vtuple (map evlt e)
+        Vtuple (map eval2' e)
 
 eval2 senv (Lfetch tup vs e) = \venv ->
     let
@@ -493,11 +492,12 @@ infer tenv (Llet ds b) =
         (tenvn, tenvt) = unzip tenv
         (vars, exps) = unzip ds
         tenvn' = vars ++ tenvn
-        tenvt' = (map (\e -> infer (zip tenvn' tenvt') e) exps) ++ tenvt
+        tenvt' = (map infer' exps) ++ tenvt
+        infer' = \e -> infer (zip tenvn' tenvt') e
     in
-        infer (zip tenvn' tenvt') b
+        infer' b
 
-infer tenv (Ltuple es) = (Ltup (map (infer tenv) es))
+infer tenv (Ltuple es) = Ltup (map (infer tenv) es)
 infer _ (Lfun _ _)     = error "Can't infer type of `fun`"
 infer _ (Lif _ _ _)    = error "Can't infer type of `if`"
 infer _ (Lfetch _ _ _) = error "Can't infer type of `fetch`"
@@ -517,15 +517,21 @@ check tenv (Lif e1 e2 e3) t
         te2 = check tenv e2 t
         te3 = check tenv e3 t
 
-check tenv (Lfetch (Ltuple tup) xs e) t =
+check tenv (Lfetch tup xs e) t =
     let
-        tuplength = length tup
+        tupleType = case tup of
+            Ltuple _ -> let Ltup list = infer tenv tup in list
+            Lvar var -> case tlookup tenv var of
+                Ltup list -> list
+                _ -> error ("Not a tuple")
+            _ -> error ("Not a tuple")
+        tuplength = length tupleType
         varlength = length xs
     in
         if tuplength /= varlength
         then error ("Tuple length and number of variables mismatch: " ++
             show tuplength ++ " != "  ++ show varlength)
-        else check ((zip (xs) (map (infer tenv) tup)) ++ tenv) e t
+        else check ((zip xs tupleType) ++ tenv) e t
 
 check tenv e t =
     -- Essaie d'inférer le type et vérifie s'il correspond au type attendu

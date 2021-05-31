@@ -3,11 +3,11 @@
 ; Philippe Gabriel - Dana Seif Eddine
 
 ; Test 1 - Expression let sans déclarations
-; Résultat: 5 | Lint
+; Résultat - 5 : Lint
 (let 5)
 
 ; Test 2 - Valeur d'une fonction
-; Résultat: <fun> | Larw Lint (Larw Lboo (Larw Lint (Ltup [Lint,Lint])))
+; Résultat - <fun> : Larw Lint (Larw Lboo (Larw Lint (Ltup [Lint,Lint])))
 (let
     (f
         (Int -> (Bool -> (Int -> (Tuple Int Int))))
@@ -17,7 +17,7 @@
       f)
 
 ; Test 3 - Tuples et fonctions
-; Résultat: [84 0 False] | Ltup [Lint,Lint,Lboo]
+; Résultat - [84 0 False] : Ltup [Lint,Lint,Lboo]
 (hastype
     (fetch
         (tuple
@@ -37,11 +37,11 @@
     (Tuple Int Int Bool))
 
 ; Test 4 - Portée
-; Résultat: 56 | Lint 
+; Résultat - 56 : Lint 
 (let (x 5) (f (y Int) Int (call + x y)) (let (x 7) (call * (call f 3) x)))
 
 ; Test 5 - Déclarations avec références avant et après
-; Résultat: False | Lboo
+; Résultat - False : Lboo
 (let (x 5)
      (y Int 10)
      (not (x Bool) Bool (if x false true))
@@ -55,3 +55,23 @@
             (call not (call (call = x) y)))
                true false)
            Bool))
+
+; Test 6 - Tuples comme variables
+; Résultat - 42 : Lint
+
+(let (x (tuple double * 7))
+    (double ((Int -> (Int -> Int)) -> (Int -> Int)) (fun op x (call op x x)))
+  (call - (hastype (fetch x (double op num) (call double op num)) Int) 7))
+
+; Test 7 - Inférence de types, détection de mismatch
+; Résultat - [1 True] : *** Exception: Type mismatch: Ltup [Lint,Lboo] != Lint
+; Mettre en commentaire pour ne pas interrompre
+
+;(let (exp (Tuple Int Bool) (if cond (tuple 1 true)
+;        (fetch (tuple + 15 12) (f x y) (call f x y))))
+;      (not (x Bool) Bool (if x false true))
+;      (false (call (call = 0) 1))
+;      (true (call = 0 0))
+;      (or (Bool Bool -> Bool) (fun x y (if x true (if y true false))))
+;      (cond (call or (call not true) (call not false)))
+;      exp)
