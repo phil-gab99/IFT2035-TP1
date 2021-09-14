@@ -1,1 +1,2 @@
-Voici des changements que j'apporte au projet
+1) Fais la classe Person
+2) Fais la classe Auto
